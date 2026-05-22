@@ -16,7 +16,7 @@ body.light{
   --border2:rgba(0,0,0,0.18);--text:#1a1a1a;--muted:#888;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:16px;min-height:100vh;transition:background .2s,color .2s}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:20px;min-height:100vh;transition:background .2s,color .2s}
 
 /* Auth */
 #auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
@@ -509,6 +509,27 @@ canvas{display:block}
 
 <div class="toast" id="toast"></div>
 
+<!-- Edit Diet Modal -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:400px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:1rem">✏️ 編輯食物</div>
+    <input type="hidden" id="edit-id">
+    <div class="field"><label>食物名稱</label><input id="edit-name"></div>
+    <div class="grid2">
+      <div class="field"><label>熱量 kcal</label><input type="number" id="edit-cal" step="0.1"></div>
+      <div class="field"><label>蛋白質 g</label><input type="number" id="edit-p" step="0.1"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>碳水 g</label><input type="number" id="edit-c" step="0.1"></div>
+      <div class="field"><label>脂肪 g</label><input type="number" id="edit-f" step="0.1"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-accent" onclick="dietEditSave()" style="flex:1">儲存</button>
+      <button class="btn" onclick="document.getElementById('edit-modal').style.display='none'">取消</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -618,7 +639,7 @@ async function loadAll(){
     var bSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'body'),fns.orderBy('createdAt','desc')));
     window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
     var dSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'diet'),fns.orderBy('createdAt','desc')));
-    window._DT=[];dSnap.forEach(function(d){window._DT.push(d.data());});
+    window._DT=[];dSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._DT.push(rec);});
     syncStatus('ok'); updateBodyMetrics(); renderDiet();
   } catch(e){ syncStatus('err'); console.error(e); }
 }
@@ -628,8 +649,9 @@ async function push(colName,data){
   try{
     var fns=window._fbFns,db=window._db;
     data.createdAt=fns.serverTimestamp();
-    await fns.addDoc(fns.collection(db,'users',window._uid,colName),data);
+    var ref=await fns.addDoc(fns.collection(db,'users',window._uid,colName),data);
     syncStatus('ok');
+    return ref.id;
   } catch(e){ syncStatus('err'); toast('⚠️ 同步失敗',1); console.error(e); }
 }
 
@@ -847,6 +869,7 @@ function renderTemplates(){
 }
 
 // ── Apply AI workout plan ────────────────────────────────
+var DAY_NAMES=['週日','週一','週二','週三','週四','週五','週六'];
 function applyAiPlan(text){
   var lines=text.split('\n');
   var exs=[];
@@ -859,6 +882,47 @@ function applyAiPlan(text){
   document.getElementById('exlist').innerHTML='';exCount=0;
   exs.forEach(function(n){addEx(n);});
   go('log');toast('✓ 已套用 AI 課表，共 '+exs.length+' 個動作！');
+}
+function saveWeekPlan(text){
+  // Parse AI reply: look for day keywords and exercises
+  var plan={};
+  var dayMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
+  var allEx=Object.values(EX_CATS).flat();
+  var lines=text.split('\n');
+  var curDay=-1;
+  lines.forEach(function(l){
+    Object.entries(dayMap).forEach(function(kv){
+      if(l.includes('週'+kv[0])||l.includes('星期'+kv[0])||l.includes('Day '+({'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7}[kv[0]]||0))){
+        curDay=kv[1];
+        if(!plan[curDay]) plan[curDay]=[];
+      }
+    });
+    if(curDay>=0){
+      allEx.forEach(function(name){
+        if(l.includes(name)&&!(plan[curDay]||[]).includes(name)){
+          if(!plan[curDay]) plan[curDay]=[];
+          plan[curDay].push(name);
+        }
+      });
+    }
+  });
+  var hasPlan=Object.keys(plan).some(function(k){return plan[k].length>0;});
+  if(!hasPlan){toast('無法解析週計畫，請確認 AI 回答包含星期和動作名稱',1);return;}
+  localStorage.setItem('week_plan',JSON.stringify(plan));
+  toast('✓ 下週課表已儲存！今後每天開啟會自動載入當天課表 📅');
+}
+function checkAndLoadTodayPlan(){
+  var plan=JSON.parse(localStorage.getItem('week_plan')||'{}');
+  var today=new Date().getDay(); // 0=Sun
+  var exs=plan[today];
+  if(!exs||!exs.length) return;
+  var lastLoad=localStorage.getItem('plan_loaded_date');
+  var todayStr=new Date().toISOString().slice(0,10);
+  if(lastLoad===todayStr) return; // already loaded today
+  localStorage.setItem('plan_loaded_date',todayStr);
+  document.getElementById('exlist').innerHTML='';exCount=0;
+  exs.forEach(function(n){addEx(n);});
+  toast('📅 已自動載入'+DAY_NAMES[today]+'課表：'+exs.join('、'));
 }
 
 // ── Body data ────────────────────────────────────────────
@@ -936,8 +1000,8 @@ async function dietAdd(){
     txt=txt.replace(/```json|```/g,'').trim();
     var info=JSON.parse(txt);
     var rec={date:new Date().toISOString().slice(0,10),meal:meal,name:info.name||food,calories:info.calories||0,protein:info.protein||0,carbs:info.carbs||0,fat:info.fat||0};
-    window._DT.unshift(rec);await push('diet',rec);
-    renderDiet();toast('✓ 已記錄 '+rec.name+'（'+rec.calories+' kcal）');
+    var docId=await push('diet',rec);if(docId)rec._id=docId;
+    window._DT.unshift(rec);renderDiet();toast('✓ 已記錄 '+rec.name+'（'+rec.calories+' kcal）');
   } catch(e){
     toast('分析失敗，請重試',1);console.error(e);
   }
@@ -965,11 +1029,58 @@ function renderDiet(){
     if(!items.length) return;
     html+='<div class="card"><div class="meal-section"><div class="meal-title"><span>'+m+'</span><span style="color:var(--muted);font-size:13px">'+items.reduce(function(a,d){return a+d.calories;},0)+' kcal</span></div>';
     items.forEach(function(d){
-      html+='<div class="food-item"><div><div class="food-name">'+d.name+'</div><div class="food-macros">蛋白質 '+d.protein+'g · 碳水 '+d.carbs+'g · 脂肪 '+d.fat+'g</div></div><div class="food-cals">'+d.calories+' kcal</div></div>';
+      var did=d._id||'';
+      html+='<div class="food-item"><div><div class="food-name">'+d.name+'</div><div class="food-macros">蛋白質 '+d.protein+'g · 碳水 '+d.carbs+'g · 脂肪 '+d.fat+'g</div></div><div style="display:flex;align-items:center;gap:8px"><div class="food-cals">'+d.calories+' kcal</div>'+(did?'<button class="btn btn-sm" onclick="dietEdit(\"'+did+'\")" style="padding:4px 8px;font-size:12px">✏️</button><button class="btn btn-sm btn-del" onclick="dietDelete(\"'+did+'\")" style="padding:4px 8px;font-size:12px">🗑</button>':'')+'</div></div>';
     });
     html+='</div></div>';
   });
   el.innerHTML=html||'<div class="card"><div class="empty" style="padding:1.5rem">今日尚未記錄飲食</div></div>';
+}
+async function dietDelete(id){
+  if(!confirm('確定刪除？')) return;
+  var idx=window._DT.findIndex(function(d){return d._id===id;});
+  if(idx===-1) return;
+  window._DT.splice(idx,1);
+  try{
+    var fns=window._fbFns,db=window._db;
+    var {deleteDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await deleteDoc(doc(db,'users',window._uid,'diet',id));
+    toast('已刪除');
+  } catch(e){ toast('刪除失敗',1);console.error(e); }
+  renderDiet();
+}
+function dietEdit(id){
+  var item=window._DT.find(function(d){return d._id===id;});
+  if(!item) return;
+  var modal=document.getElementById('edit-modal');
+  document.getElementById('edit-id').value=id;
+  document.getElementById('edit-name').value=item.name;
+  document.getElementById('edit-cal').value=item.calories;
+  document.getElementById('edit-p').value=item.protein;
+  document.getElementById('edit-c').value=item.carbs;
+  document.getElementById('edit-f').value=item.fat;
+  modal.style.display='flex';
+}
+async function dietEditSave(){
+  var id=document.getElementById('edit-id').value;
+  var idx=window._DT.findIndex(function(d){return d._id===id;});
+  if(idx===-1) return;
+  window._DT[idx].name=document.getElementById('edit-name').value;
+  window._DT[idx].calories=parseFloat(document.getElementById('edit-cal').value)||0;
+  window._DT[idx].protein=parseFloat(document.getElementById('edit-p').value)||0;
+  window._DT[idx].carbs=parseFloat(document.getElementById('edit-c').value)||0;
+  window._DT[idx].fat=parseFloat(document.getElementById('edit-f').value)||0;
+  try{
+    var {updateDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    var db=window._db;
+    await updateDoc(doc(db,'users',window._uid,'diet',id),{
+      name:window._DT[idx].name,calories:window._DT[idx].calories,
+      protein:window._DT[idx].protein,carbs:window._DT[idx].carbs,fat:window._DT[idx].fat
+    });
+    toast('✓ 已更新');
+  } catch(e){ toast('更新失敗',1);console.error(e); }
+  document.getElementById('edit-modal').style.display='none';
+  renderDiet();
 }
 
 // ── AI Coach ─────────────────────────────────────────────
@@ -1021,7 +1132,11 @@ function renderAiChat(){
   if(!aiHistory.length){chat.innerHTML='';return;}
   chat.innerHTML=aiHistory.map(function(m){
     var body=(m.role==='assistant'&&!m.typing)?mdRender(m.content):m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var applyBtn=(m.role==='assistant'&&!m.typing&&m.hasPlan)?'<button class="ai-apply-btn" onclick="applyAiPlan(aiHistory['+m.idx+'].raw)">🏋️ 套用此課表</button>':'';
+    var applyBtn='';
+    if(m.role==='assistant'&&!m.typing&&m.hasPlan){
+      applyBtn='<button class="ai-apply-btn" onclick="applyAiPlan(aiHistory['+m.idx+'].raw)">🏋️ 套用今日課表</button>';
+      if(m.isWeekPlan) applyBtn+=' <button class="ai-apply-btn" style="background:rgba(110,228,240,.12);color:var(--blue);border-color:rgba(110,228,240,.3)" onclick="saveWeekPlan(aiHistory['+m.idx+'].raw)">📅 儲存下週課表</button>';
+    }
     return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+body+applyBtn+'</div>';
   }).join('');
   chat.scrollTop=chat.scrollHeight;
@@ -1049,8 +1164,9 @@ async function aiAsk(question){
     var data=await res.json();
     var reply=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'抱歉，無法取得回應。';
     var hasPlan=reply.includes('組')&&reply.includes('次');
+    var isWeekPlan=hasPlan&&(reply.includes('週一')||reply.includes('星期一')||reply.includes('Day 1'));
     var idx=aiHistory.length-1;
-    aiHistory[idx]={role:'assistant',content:reply,raw:reply,typing:false,hasPlan:hasPlan,idx:idx};
+    aiHistory[idx]={role:'assistant',content:reply,raw:reply,typing:false,hasPlan:hasPlan,isWeekPlan:isWeekPlan,idx:idx};
   } catch(e){
     aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 連線失敗，請確認網路連線後重試。',typing:false};
   }
@@ -1058,7 +1174,25 @@ async function aiAsk(question){
 }
 
 async function genWeeklyReport(){
-  var q='請根據我本週的訓練紀錄，生成一份週報摘要：包含訓練天數、總訓練量、各肌群訓練情況、本週最佳表現，以及下週建議。';
+  // Build 7-day diet summary
+  var now=new Date();
+  var weekDiet={};
+  var proteinGoal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
+  var calGoal=parseInt(localStorage.getItem('cal_goal')||'2000');
+  for(var i=0;i<7;i++){
+    var d=new Date(now);d.setDate(d.getDate()-i);
+    var ds=d.toISOString().slice(0,10);
+    var items=window._DT.filter(function(x){return x.date===ds;});
+    if(items.length){
+      weekDiet[ds]={cal:items.reduce(function(a,x){return a+x.calories;},0),protein:items.reduce(function(a,x){return a+x.protein;},0)};
+    }
+  }
+  var dietLines=Object.entries(weekDiet).sort().map(function(kv){
+    var deficit=calGoal-kv[1].cal;
+    var proteinOk=kv[1].protein>=proteinGoal;
+    return kv[0]+' 熱量:'+kv[1].cal+'kcal（'+(deficit>0?'赤字'+deficit:' 超標'+(deficit*-1))+'kcal），蛋白質:'+kv[1].protein+'g（'+(proteinOk?'✓ 達標':'✗ 不足，差'+(proteinGoal-kv[1].protein)+'g')+'）';
+  }).join('\n');
+  var q='請根據我本週的訓練紀錄和飲食資料，生成一份週報摘要。\n\n本週每日飲食紀錄（蛋白質目標：'+proteinGoal+'g/日，熱量目標：'+calGoal+'kcal/日）：\n'+(dietLines||'本週無飲食紀錄')+'\n\n請包含：1.訓練天數與總訓練量 2.各肌群訓練情況 3.每日蛋白質達標分析 4.每日熱量赤字分析 5.本週最佳表現 6.下週改善建議';
   aiAsk(q);
 }
 
@@ -1243,7 +1377,8 @@ function renderHabit(){
 var t=localStorage.getItem('theme')||'dark';
 if(t==='light') document.body.classList.add('light');
 renderExPicker();
-addEx('臥推');
+checkAndLoadTodayPlan();
+if(!document.getElementById('exlist').children.length) addEx('臥推');
 </script>
 </body>
 </html>
