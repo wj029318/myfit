@@ -703,36 +703,33 @@ function buildContext(){
 
 
 function mdRender(text){
-  // Escape HTML first
   text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // Headers
-  text = text.replace(/^### (.+)$/gm,'<h3>$1</h3>');
-  text = text.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
-  text = text.replace(/^## (.+)$/gm,'<h3>$1</h3>');
-  // Bold & italic
-  text = text.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
-  text = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  // HR
-  text = text.replace(/^---+$/gm,'<hr>');
-  // Unordered lists
-  text = text.replace(/^[\*\-] (.+)$/gm,'<li>$1</li>');
-  text = text.replace(/(<li>.*<\/li>)/s, function(m){ return '<ul>'+m+'</ul>'; });
-  // Numbered lists
-  text = text.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
-  // Wrap paragraphs (lines not already wrapped)
-  text = text.split('
-').map(function(line){
-    if(!line.trim()) return '';
-    if(line.match(/^<(h[34]|li|ul|hr|\/ul)/)) return line;
-    return '<p>'+line+'</p>';
-  }).join('');
-  // Fix nested lists
-  text = text.replace(/(<\/li>)\s*(<li>)/g,'$1$2');
-  text = text.replace(/(<p>)?<li>/g,'<li>').replace(/<\/li>(<\/p>)?/g,'</li>');
-  text = text.replace(/(<li>[\s\S]*?<\/li>)+/g, function(m){ return '<ul>'+m+'</ul>'; });
-  // Remove empty paragraphs
-  text = text.replace(/<p><\/p>/g,'');
-  return text;
+  var lines = text.split('\n');
+  var out = [];
+  var inList = false;
+  for(var i=0;i<lines.length;i++){
+    var l = lines[i];
+    if(!l.trim()){if(inList){out.push('</ul>');inList=false;}out.push('');continue;}
+    // headers
+    if(l.match(/^### /)){if(inList){out.push('</ul>');inList=false;}out.push('<h3>'+fmt(l.slice(4))+'</h3>');continue;}
+    if(l.match(/^## /)){if(inList){out.push('</ul>');inList=false;}out.push('<h3>'+fmt(l.slice(3))+'</h3>');continue;}
+    if(l.match(/^#### /)){if(inList){out.push('</ul>');inList=false;}out.push('<h4>'+fmt(l.slice(5))+'</h4>');continue;}
+    // hr
+    if(l.match(/^---/)){if(inList){out.push('</ul>');inList=false;}out.push('<hr>');continue;}
+    // list items
+    if(l.match(/^[-*] /)){if(!inList){out.push('<ul>');inList=true;}out.push('<li>'+fmt(l.slice(2))+'</li>');continue;}
+    if(l.match(/^\d+\. /)){if(!inList){out.push('<ul>');inList=true;}out.push('<li>'+fmt(l.replace(/^\d+\. /,''))+'</li>');continue;}
+    // paragraph
+    if(inList){out.push('</ul>');inList=false;}
+    out.push('<p>'+fmt(l)+'</p>');
+  }
+  if(inList) out.push('</ul>');
+  return out.join('');
+}
+function fmt(t){
+  t = t.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  return t;
 }
 
 function renderAiChat(){
