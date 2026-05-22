@@ -157,6 +157,18 @@ canvas{display:block}
 .bmi-over{background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
 .bmi-obese{background:rgba(240,112,112,.12);color:var(--danger);border:1px solid rgba(240,112,112,.3)}
 
+
+/* Markdown rendering */
+.ai-msg.assistant h3{font-size:15px;font-weight:700;color:var(--accent);margin:12px 0 6px}
+.ai-msg.assistant h4{font-size:14px;font-weight:600;color:var(--blue);margin:10px 0 5px}
+.ai-msg.assistant ul,.ai-msg.assistant ol{padding-left:1.4em;margin:6px 0}
+.ai-msg.assistant li{margin-bottom:4px;line-height:1.7}
+.ai-msg.assistant strong{color:var(--text);font-weight:600}
+.ai-msg.assistant em{color:var(--muted)}
+.ai-msg.assistant hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.ai-msg.assistant p{margin-bottom:8px;line-height:1.8}
+.ai-msg.assistant code{background:var(--surface);padding:2px 6px;border-radius:4px;font-size:12px}
+
 /* toast */
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;padding:11px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;z-index:999;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
@@ -689,11 +701,46 @@ function buildContext(){
     '\n\n請用繁體中文回答，給出專業、具體、有依據的建議。';
 }
 
+
+function mdRender(text){
+  // Escape HTML first
+  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // Headers
+  text = text.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+  text = text.replace(/^#### (.+)$/gm,'<h4>$1</h4>');
+  text = text.replace(/^## (.+)$/gm,'<h3>$1</h3>');
+  // Bold & italic
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  text = text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  // HR
+  text = text.replace(/^---+$/gm,'<hr>');
+  // Unordered lists
+  text = text.replace(/^[\*\-] (.+)$/gm,'<li>$1</li>');
+  text = text.replace(/(<li>.*<\/li>)/s, function(m){ return '<ul>'+m+'</ul>'; });
+  // Numbered lists
+  text = text.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  // Wrap paragraphs (lines not already wrapped)
+  text = text.split('
+').map(function(line){
+    if(!line.trim()) return '';
+    if(line.match(/^<(h[34]|li|ul|hr|\/ul)/)) return line;
+    return '<p>'+line+'</p>';
+  }).join('');
+  // Fix nested lists
+  text = text.replace(/(<\/li>)\s*(<li>)/g,'$1$2');
+  text = text.replace(/(<p>)?<li>/g,'<li>').replace(/<\/li>(<\/p>)?/g,'</li>');
+  text = text.replace(/(<li>[\s\S]*?<\/li>)+/g, function(m){ return '<ul>'+m+'</ul>'; });
+  // Remove empty paragraphs
+  text = text.replace(/<p><\/p>/g,'');
+  return text;
+}
+
 function renderAiChat(){
   var chat=document.getElementById('ai-chat');
   if(!aiHistory.length){chat.innerHTML='';return;}
   chat.innerHTML=aiHistory.map(function(m){
-    return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+m.content+'</div>';
+    var body = (m.role==='assistant'&&!m.typing) ? mdRender(m.content) : m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+body+'</div>';
   }).join('');
   chat.scrollTop=chat.scrollHeight;
 }
