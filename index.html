@@ -206,6 +206,7 @@ canvas{display:block}
     <button class="nav" onclick="go('history')">📋 &nbsp;歷史紀錄</button>
     <button class="nav" onclick="go('progress')">📈 &nbsp;進步分析</button>
     <button class="nav" onclick="go('habit')">📅 &nbsp;打卡習慣</button>
+    <button class="nav" onclick="go('settings')">⚙️ &nbsp;設定</button>
     <button class="nav nav-logout" onclick="doLogout()">⎋ &nbsp;登出</button>
   </aside>
   <main class="main">
@@ -346,6 +347,22 @@ canvas{display:block}
       </div>
     </div>
 
+
+    <!-- SETTINGS -->
+    <div id="pg-settings" class="pg">
+      <div class="pg-title">⚙️ 設定</div>
+      <div class="card">
+        <div class="card-lbl">Gemini API Key</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;line-height:1.7">請輸入你的 Gemini API Key，儲存在本機瀏覽器中，不會上傳至任何伺服器。<br>取得 Key：<a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">Google AI Studio</a></p>
+        <div class="field"><label>API Key</label><input type="password" id="gemini-key-input" placeholder="AQ.Ab8RN..."></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
+          <button class="btn btn-accent" onclick="saveApiKey()">儲存</button>
+          <button class="btn btn-del btn-sm" onclick="clearApiKey()">清除</button>
+          <span id="key-status" style="font-size:12px;color:var(--muted)"></span>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 <nav class="mobnav">
@@ -465,7 +482,7 @@ async function push(colName,data){
 }
 
 // ── Nav ─────────────────────────────────────────────────
-var PAGES=['log','body','ai','history','progress','habit'];
+var PAGES=['log','body','ai','history','progress','habit','settings'];
 function go(p){
   document.querySelectorAll('.pg').forEach(function(e){e.classList.remove('on');});
   document.querySelectorAll('.nav').forEach(function(e){e.classList.remove('on');});
@@ -479,6 +496,7 @@ function go(p){
   if(p==='habit') renderHabit();
   if(p==='body') renderBody();
   if(p==='ai') renderAiChat();
+  if(p==='settings') renderSettings();
 }
 
 // ── Type ────────────────────────────────────────────────
@@ -565,7 +583,29 @@ async function saveWorkout(){
   document.getElementById('note').value='';document.getElementById('ct').value='';document.getElementById('cd').value='';document.getElementById('cpacein').value='';
   exCount=0;selEx=null;
   document.getElementById('mv').textContent='0';document.getElementById('ms').textContent='0';document.getElementById('me').textContent='0';
-  toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);addEx('臥推');
+  toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
+// ── Settings / API Key ───────────────────────────────────
+function saveApiKey(){
+  var k=document.getElementById('gemini-key-input').value.trim();
+  if(!k){toast('請輸入 API Key！',1);return;}
+  localStorage.setItem('gemini_api_key',k);
+  document.getElementById('key-status').textContent='✓ 已儲存';
+  document.getElementById('gemini-key-input').value='';
+  toast('✓ API Key 已儲存！');
+}
+function clearApiKey(){
+  localStorage.removeItem('gemini_api_key');
+  document.getElementById('gemini-key-input').value='';
+  document.getElementById('key-status').textContent='已清除';
+  toast('API Key 已清除');
+}
+function renderSettings(){
+  var k=localStorage.getItem('gemini_api_key');
+  document.getElementById('key-status').textContent=k?'✓ 已設定 Key':'尚未設定';
+  document.getElementById('gemini-key-input').value='';
+}
+
+addEx('臥推');
 }
 
 // ── Body data ────────────────────────────────────────────
@@ -669,18 +709,19 @@ async function aiAsk(question){
   var messages=[{role:'user',content:ctx+'\n\n用戶問題：'+q}];
 
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{
+    var GEMINI_KEY=localStorage.getItem('gemini_api_key');
+    if(!GEMINI_KEY){aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 請先至「設定」頁面輸入 Gemini API Key。',typing:false};renderAiChat();return;}
+    var systemPrompt='你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持你的建議。';
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+GEMINI_KEY,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:'你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持你的建議。',
-        messages:messages
+        system_instruction:{parts:[{text:systemPrompt}]},
+        contents:[{role:'user',parts:[{text:ctx+'\n\n用戶問題：'+q}]}]
       })
     });
     var data=await res.json();
-    var reply=data.content&&data.content[0]?data.content[0].text:'抱歉，無法取得回應。';
+    var reply=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'抱歉，無法取得回應。';
     aiHistory[aiHistory.length-1]={role:'assistant',content:reply,typing:false};
   } catch(e){
     aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 連線失敗，請確認網路連線後重試。',typing:false};
@@ -827,6 +868,7 @@ function renderHabit(){
 }
 
 // ── Init ─────────────────────────────────────────────────
+
 addEx('臥推');
 </script>
 </body>
