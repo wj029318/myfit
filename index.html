@@ -635,7 +635,7 @@ async function loadAll(){
   try{
     var fns=window._fbFns,db=window._db,uid=window._uid;
     var wSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'workouts'),fns.orderBy('createdAt','desc')));
-    window._WK=[];wSnap.forEach(function(d){window._WK.push(d.data());});
+    window._WK=[];wSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._WK.push(rec);});
     var bSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'body'),fns.orderBy('createdAt','desc')));
     window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
     var dSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'diet'),fns.orderBy('createdAt','desc')));
@@ -810,7 +810,8 @@ async function saveWorkout(){
     if(!t){toast('請輸入訓練時間！',1);return;}
     w.cardio={time:t,distance:d,pace:document.getElementById('cpacein').value};
   }
-  window._WK.unshift(w);await push('workouts',w);
+  var wid=await push('workouts',w);if(wid)w._id=wid;
+  window._WK.unshift(w);
   resetLogForm();
   toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
 }
@@ -1253,7 +1254,7 @@ function pr(name){
 function renderHist(){
   var el=document.getElementById('histlist');
   if(!window._WK.length){el.innerHTML='<div class="empty">還沒有訓練紀錄</div>';return;}
-  el.innerHTML=window._WK.map(function(w){
+  el.innerHTML=window._WK.map(function(w,i){
     var sub='';
     if(w.type==='cardio'&&w.cardio){
       sub=w.cardio.distance?w.cardio.time+'分鐘 · '+w.cardio.distance+'km · '+w.cardio.pace:w.cardio.time+'分鐘';
@@ -1262,12 +1263,23 @@ function renderHist(){
       sub=(w.exercises||[]).length+'個動作 · '+vol+'kg · '+(w.exercises||[]).map(function(e){return e.name;}).join('、');
     }
     var prex=(w.exercises||[]).filter(function(e){return e.sets.some(function(s){return s.weight>0&&s.weight>=pr(e.name);});});
+    var delBtn=w._id?'<button class="btn btn-sm btn-del" data-id="'+w._id+'" data-idx="'+i+'" onclick="deleteWorkout(this.dataset.id,+this.dataset.idx)" style="margin-left:auto;padding:3px 9px;font-size:13px">🗑</button>':'';
     return '<div class="logitem"><div class="logitem-top"><span class="tag '+(w.type==='cardio'?'tag-c':'tag-s')+'">'+(w.type==='cardio'?'有氧':'重訓')+'</span>'+
-      '<span class="logdate">'+w.date+'</span>'+(prex.length?'<span class="prbadge">🏆 PR</span>':'')+
+      '<span class="logdate">'+w.date+'</span>'+(prex.length?'<span class="prbadge">🏆 PR</span>':'')+delBtn+
       '</div><div class="logsub">'+sub+(w.note?' · '+w.note:'')+'</div>'+
       (prex.length?'<div style="font-size:12px;color:var(--warn);margin-top:4px">創新高：'+prex.map(function(e){return e.name;}).join('、')+'</div>':'')+
     '</div>';
   }).join('');
+}
+async function deleteWorkout(id,idx){
+  if(!confirm('確定刪除此筆訓練紀錄？')) return;
+  window._WK.splice(idx,1);
+  renderHist();
+  try{
+    var {deleteDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await deleteDoc(doc(window._db,'users',window._uid,'workouts',id));
+    toast('✓ 已刪除');
+  } catch(e){ toast('刪除失敗',1);console.error(e); }
 }
 
 // ── Charts ───────────────────────────────────────────────
