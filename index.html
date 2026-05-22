@@ -584,6 +584,8 @@ async function saveWorkout(){
   exCount=0;selEx=null;
   document.getElementById('mv').textContent='0';document.getElementById('ms').textContent='0';document.getElementById('me').textContent='0';
   toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
+}
+
 // ── Settings / API Key ───────────────────────────────────
 function saveApiKey(){
   var k=document.getElementById('gemini-key-input').value.trim();
@@ -606,7 +608,6 @@ function renderSettings(){
 }
 
 addEx('臥推');
-}
 
 // ── Body data ────────────────────────────────────────────
 document.addEventListener('input', function(e){
