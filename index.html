@@ -11,37 +11,41 @@
   --accent:#c8f06e;--blue:#6ee4f0;--warn:#f0c46e;--danger:#f07070;--purple:#b8a4f8;
   --r:10px;--r-sm:7px;
 }
+body.light{
+  --bg:#f4f4f0;--surface:#fff;--s2:#f0f0ec;--border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.18);--text:#1a1a1a;--muted:#888;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:14px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:16px;min-height:100vh;transition:background .2s,color .2s}
 
 /* Auth */
 #auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
 .auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;width:100%;max-width:380px}
-.auth-logo{font-size:26px;font-weight:800;color:var(--accent);margin-bottom:.25rem;letter-spacing:-1px}
+.auth-logo{font-size:28px;font-weight:800;color:var(--accent);margin-bottom:.25rem;letter-spacing:-1px}
 .auth-logo em{color:var(--text);font-style:normal;font-weight:300}
-.auth-sub{font-size:13px;color:var(--muted);margin-bottom:1.75rem}
+.auth-sub{font-size:14px;color:var(--muted);margin-bottom:1.75rem}
 .auth-tabs{display:flex;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-bottom:1.5rem}
-.auth-tab{flex:1;padding:8px;font-size:13px;background:transparent;border:none;cursor:pointer;color:var(--muted);transition:.15s;font-family:inherit}
+.auth-tab{flex:1;padding:8px;font-size:14px;background:transparent;border:none;cursor:pointer;color:var(--muted);transition:.15s;font-family:inherit}
 .auth-tab.on{background:var(--s2);color:var(--accent);font-weight:500}
-.auth-err{font-size:12px;color:var(--danger);margin-bottom:10px;min-height:18px}
+.auth-err{font-size:13px;color:var(--danger);margin-bottom:10px;min-height:18px}
 
 /* App shell */
 #app-screen{display:none}
 .shell{display:flex;min-height:100vh}
-.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:1.75rem 1rem;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;flex-shrink:0;overflow-y:auto}
-.logo{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:.2rem;letter-spacing:-1px}
+.sidebar{width:215px;background:var(--surface);border-right:1px solid var(--border);padding:1.75rem 1rem;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;flex-shrink:0;overflow-y:auto}
+.logo{font-size:22px;font-weight:800;color:var(--accent);margin-bottom:.2rem;letter-spacing:-1px}
 .logo em{color:var(--text);font-style:normal;font-weight:300}
-.user-info{font-size:11px;color:var(--muted);margin-bottom:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:.15s;font-family:inherit}
+.user-info{font-size:12px;color:var(--muted);margin-bottom:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-size:14px;border:none;background:none;width:100%;text-align:left;transition:.15s;font-family:inherit}
 .nav:hover{background:var(--s2);color:var(--text)}.nav.on{background:var(--s2);color:var(--accent);font-weight:500}
 .nav-logout{margin-top:auto;color:var(--danger)!important}
 .nav-logout:hover{background:rgba(240,112,112,.08)!important}
 .main{flex:1;padding:2rem;overflow-y:auto}
 .pg{display:none}.pg.on{display:block}
-.pg-title{font-size:22px;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
+.pg-title{font-size:24px;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
 
 /* sync */
-.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:400}
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);font-weight:400}
 .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
 .sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite}
 .sync-dot.err{background:var(--danger)}
@@ -49,93 +53,139 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,
 
 /* cards */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
-.card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem}
+.card-lbl{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem}
 .mrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
 .mrow4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
 .mcard{background:var(--s2);border-radius:var(--r-sm);padding:1rem}
 .mval{font-size:24px;font-weight:700;color:var(--accent);line-height:1}
 .mval.blue{color:var(--blue)}.mval.purple{color:var(--purple)}.mval.warn{color:var(--warn)}
-.mlbl{font-size:11px;color:var(--muted);margin-top:5px}
+.mlbl{font-size:12px;color:var(--muted);margin-top:5px}
 
 /* form */
 .field{margin-bottom:12px}
-.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:14px;outline:none;transition:.15s;font-family:inherit}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:16px;outline:none;transition:.15s;font-family:inherit}
 input:focus,select:focus,textarea:focus{border-color:var(--border2)}
 select option{background:var(--s2)}
 textarea{resize:vertical;min-height:80px;line-height:1.5}
 
 /* buttons */
-.btn{padding:9px 16px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;transition:.15s;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit}
+.btn{padding:9px 16px;border-radius:var(--r-sm);font-size:14px;cursor:pointer;transition:.15s;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit}
 .btn:hover{background:var(--s2)}.btn:active{transform:scale(.98)}
 .btn-accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
 .btn-accent:hover{opacity:.88;background:var(--accent)}
 .btn-purple{background:rgba(184,164,248,.15);color:var(--purple);border-color:rgba(184,164,248,.3);font-weight:500}
 .btn-purple:hover{background:rgba(184,164,248,.22)}
-.btn-sm{padding:6px 11px;font-size:12px}
+.btn-blue{background:rgba(110,228,240,.15);color:var(--blue);border-color:rgba(110,228,240,.3);font-weight:500}
+.btn-blue:hover{background:rgba(110,228,240,.22)}
+.btn-sm{padding:6px 11px;font-size:13px}
 .btn-del{color:var(--danger);border-color:rgba(240,112,112,.25);background:transparent}
 .btn-del:hover{background:rgba(240,112,112,.08)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
 .type-sel{display:flex;gap:8px;margin-bottom:1rem}
-.tybtn{flex:1;padding:10px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+.tybtn{flex:1;padding:10px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;cursor:pointer;transition:.15s;font-family:inherit}
 .tybtn:hover{background:var(--s2);color:var(--text)}.tybtn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,240,110,.06)}
 .divider{height:1px;background:var(--border);margin:1rem 0}
+
+/* exercise picker */
+.ex-picker{margin-bottom:1rem}
+.ex-picker-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.cat-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+.cat-btn:hover{background:var(--s2);color:var(--text)}.cat-btn.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.ex-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.ex-tile{padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--s2);color:var(--text);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit;text-align:center}
+.ex-tile:hover{border-color:var(--accent);color:var(--accent);background:rgba(200,240,110,.06)}
 
 /* exercise blocks */
 .exblock{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:10px}
 .exhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.exname{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;color:var(--text);font-size:14px;font-weight:600;padding:4px 0;outline:none;font-family:inherit}
+.exname{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;color:var(--text);font-size:15px;font-weight:600;padding:4px 0;outline:none;font-family:inherit}
 .exname:focus{border-bottom-color:var(--accent)}
-.sets-hdr{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:5px}
+.ex-last{font-size:11px;color:var(--muted);margin-bottom:6px;font-style:italic}
+.sets-hdr{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:5px}
 .setrow{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;align-items:center;margin-bottom:5px}
-.setnum{font-size:12px;color:var(--muted);text-align:center}
-.setin{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 6px;font-size:13px;text-align:center;font-family:inherit;outline:none;width:100%}
+.setnum{font-size:13px;color:var(--muted);text-align:center}
+.setin{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 6px;font-size:14px;text-align:center;font-family:inherit;outline:none;width:100%}
 .setin:focus{border-color:var(--border2)}
-.vout{font-size:12px;color:var(--blue);text-align:center}
+.vout{font-size:13px;color:var(--blue);text-align:center}
 .delbtn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0}
 .delbtn:hover{color:var(--danger)}
-.addset{width:100%;background:transparent;border:1px dashed var(--border2);border-radius:6px;color:var(--muted);padding:7px;cursor:pointer;font-size:12px;margin-top:4px;transition:.15s;font-family:inherit}
+.addset{width:100%;background:transparent;border:1px dashed var(--border2);border-radius:6px;color:var(--muted);padding:7px;cursor:pointer;font-size:13px;margin-top:4px;transition:.15s;font-family:inherit}
 .addset:hover{color:var(--text);background:var(--surface)}
 
+/* rest timer */
+.rest-timer{display:none;position:fixed;bottom:6rem;right:1.5rem;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1rem 1.25rem;z-index:200;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.rest-timer.show{display:block}
+.rest-time{font-size:36px;font-weight:800;color:var(--accent);line-height:1;font-variant-numeric:tabular-nums}
+.rest-lbl{font-size:12px;color:var(--muted);margin-bottom:8px}
+.rest-btns{display:flex;gap:6px;margin-top:8px}
+
+/* templates */
+.tpl-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.tpl-item:last-child{border-bottom:none}
+.tpl-name{flex:1;font-weight:500;font-size:15px}
+.tpl-sub{font-size:13px;color:var(--muted)}
+
 /* tags */
-.tag{display:inline-block;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.tag{display:inline-block;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
 .tag-s{background:rgba(200,240,110,.12);color:var(--accent);border:1px solid rgba(200,240,110,.25)}
 .tag-c{background:rgba(110,228,240,.12);color:var(--blue);border:1px solid rgba(110,228,240,.25)}
-.prbadge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
+.prbadge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
 .logitem{padding:12px 0;border-bottom:1px solid var(--border)}
 .logitem:last-child{border-bottom:none}
 .logitem-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
-.logdate{font-size:12px;color:var(--muted)}
-.logsub{font-size:12px;color:var(--muted);line-height:1.5}
+.logdate{font-size:13px;color:var(--muted)}
+.logsub{font-size:13px;color:var(--muted);line-height:1.5}
 
 /* body log items */
 .bodyitem{padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .bodyitem:last-child{border-bottom:none}
-.bodyitem-date{font-size:12px;color:var(--muted)}
-.bodyitem-vals{display:flex;gap:16px;font-size:13px}
+.bodyitem-date{font-size:13px;color:var(--muted)}
+.bodyitem-vals{display:flex;gap:16px;font-size:14px}
 .bodyval{text-align:center}
-.bodyval span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.bodyval span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+
+/* diet */
+.meal-section{margin-bottom:1rem}
+.meal-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.food-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.food-item:last-child{border-bottom:none}
+.food-name{flex:1;font-size:15px}
+.food-cals{font-size:14px;color:var(--accent);font-weight:600}
+.food-macros{font-size:12px;color:var(--muted)}
+.cal-bar-wrap{background:var(--s2);border-radius:20px;height:8px;margin:8px 0;overflow:hidden}
+.cal-bar{height:8px;border-radius:20px;background:var(--accent);transition:width .4s}
+.diet-analyzing{color:var(--muted);font-style:italic;font-size:14px;padding:8px 0}
 
 /* AI chat */
-.ai-box{background:var(--s2);border-radius:var(--r);padding:1.25rem;min-height:120px;line-height:1.8;font-size:14px;color:var(--text);white-space:pre-wrap;word-break:break-word}
-.ai-box.loading{color:var(--muted);font-style:italic}
-.ai-box.empty{color:var(--muted)}
 .ai-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
-.ai-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.ai-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
 .ai-chip:hover{border-color:var(--purple);color:var(--purple);background:rgba(184,164,248,.06)}
 .ai-input-row{display:flex;gap:8px;margin-top:1rem}
 .ai-input-row input{flex:1}
-.ai-msg{margin-bottom:12px;padding:12px;border-radius:var(--r-sm)}
-.ai-msg.user{background:rgba(200,240,110,.08);border:1px solid rgba(200,240,110,.15);color:var(--accent)}
-.ai-msg.assistant{background:var(--s2);border:1px solid var(--border);line-height:1.8}
+.ai-msg{margin-bottom:12px;padding:14px;border-radius:var(--r-sm)}
+.ai-msg.user{background:rgba(200,240,110,.08);border:1px solid rgba(200,240,110,.15);color:var(--accent);font-size:15px}
+.ai-msg.assistant{background:var(--s2);border:1px solid var(--border);line-height:1.8;font-size:15px}
 .ai-msg.assistant.typing{color:var(--muted);font-style:italic}
+.ai-apply-btn{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 16px;border-radius:var(--r-sm);background:rgba(200,240,110,.12);color:var(--accent);border:1px solid rgba(200,240,110,.3);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+.ai-apply-btn:hover{background:rgba(200,240,110,.22)}
+
+/* Markdown */
+.ai-msg.assistant h3{font-size:16px;font-weight:700;color:var(--accent);margin:14px 0 7px}
+.ai-msg.assistant h4{font-size:15px;font-weight:600;color:var(--blue);margin:12px 0 6px}
+.ai-msg.assistant ul,.ai-msg.assistant ol{padding-left:1.4em;margin:6px 0}
+.ai-msg.assistant li{margin-bottom:5px;line-height:1.7}
+.ai-msg.assistant strong{color:var(--text);font-weight:600}
+.ai-msg.assistant em{color:var(--muted)}
+.ai-msg.assistant hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+.ai-msg.assistant p{margin-bottom:8px;line-height:1.8}
 
 /* calendar */
 .calhdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
-.calhdr-d{text-align:center;font-size:10px;color:var(--muted);padding:4px 0}
+.calhdr-d{text-align:center;font-size:11px;color:var(--muted);padding:4px 0}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.calday{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);background:var(--s2)}
+.calday{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);background:var(--s2)}
 .calday.done{background:rgba(200,240,110,.18);color:var(--accent);font-weight:600}
 .calday.today{outline:1.5px solid var(--border2)}
 .calday.empty{background:transparent}
@@ -147,32 +197,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .chart-wrap{position:relative;width:100%;height:200px;margin-top:8px}
 canvas{display:block}
 .sel-ex{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
-.exbtn{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.exbtn{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
 .exbtn:hover{color:var(--text);background:var(--s2)}.exbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,240,110,.06)}
 
 /* bmi badge */
-.bmi-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-left:8px}
+.bmi-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;margin-left:8px}
 .bmi-under{background:rgba(110,228,240,.12);color:var(--blue);border:1px solid rgba(110,228,240,.3)}
 .bmi-normal{background:rgba(200,240,110,.12);color:var(--accent);border:1px solid rgba(200,240,110,.3)}
 .bmi-over{background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
 .bmi-obese{background:rgba(240,112,112,.12);color:var(--danger);border:1px solid rgba(240,112,112,.3)}
 
-
-/* Markdown rendering */
-.ai-msg.assistant h3{font-size:15px;font-weight:700;color:var(--accent);margin:12px 0 6px}
-.ai-msg.assistant h4{font-size:14px;font-weight:600;color:var(--blue);margin:10px 0 5px}
-.ai-msg.assistant ul,.ai-msg.assistant ol{padding-left:1.4em;margin:6px 0}
-.ai-msg.assistant li{margin-bottom:4px;line-height:1.7}
-.ai-msg.assistant strong{color:var(--text);font-weight:600}
-.ai-msg.assistant em{color:var(--muted)}
-.ai-msg.assistant hr{border:none;border-top:1px solid var(--border);margin:10px 0}
-.ai-msg.assistant p{margin-bottom:8px;line-height:1.8}
-.ai-msg.assistant code{background:var(--surface);padding:2px 6px;border-radius:4px;font-size:12px}
-
 /* toast */
-.toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;padding:11px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;z-index:999;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;padding:11px 18px;border-radius:var(--r-sm);font-size:14px;font-weight:600;z-index:999;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
-.empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px}
+.empty{text-align:center;padding:3rem;color:var(--muted);font-size:15px}
+
+/* weekly report */
+.weekly-report{background:var(--s2);border-radius:var(--r);padding:1.25rem;line-height:1.8;font-size:15px;white-space:pre-wrap;word-break:break-word}
 
 /* mobile */
 @media(max-width:660px){
@@ -180,6 +221,7 @@ canvas{display:block}
   .mrow{grid-template-columns:1fr 1fr}.mrow4{grid-template-columns:1fr 1fr}
   .grid2,.grid3{grid-template-columns:1fr}
   .toast{bottom:5rem;right:1rem;left:1rem;text-align:center}
+  .rest-timer{bottom:5rem;right:.75rem}
 }
 .mobnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 14px;z-index:100}
 @media(max-width:660px){.mobnav{display:flex}}
@@ -206,6 +248,17 @@ canvas{display:block}
   </div>
 </div>
 
+<!-- REST TIMER -->
+<div class="rest-timer" id="rest-timer">
+  <div class="rest-lbl">組間休息</div>
+  <div class="rest-time" id="rest-time">90</div>
+  <div class="rest-btns">
+    <button class="btn btn-sm" onclick="adjRest(-15)">-15s</button>
+    <button class="btn btn-sm btn-del" onclick="stopRest()">停止</button>
+    <button class="btn btn-sm" onclick="adjRest(15)">+15s</button>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app-screen">
 <div class="shell">
@@ -214,8 +267,10 @@ canvas{display:block}
     <div class="user-info" id="user-email"></div>
     <button class="nav on" onclick="go('log')">＋ &nbsp;新增訓練</button>
     <button class="nav" onclick="go('body')">⚖️ &nbsp;身體數據</button>
+    <button class="nav" onclick="go('diet')">🥗 &nbsp;飲食記錄</button>
     <button class="nav" onclick="go('ai')">🤖 &nbsp;AI 教練</button>
-    <button class="nav" onclick="go('history')">📋 &nbsp;歷史紀錄</button>
+    <button class="nav" onclick="go('templates')">📋 &nbsp;訓練範本</button>
+    <button class="nav" onclick="go('history')">🕐 &nbsp;歷史紀錄</button>
     <button class="nav" onclick="go('progress')">📈 &nbsp;進步分析</button>
     <button class="nav" onclick="go('habit')">📅 &nbsp;打卡習慣</button>
     <button class="nav" onclick="go('settings')">⚙️ &nbsp;設定</button>
@@ -240,8 +295,14 @@ canvas{display:block}
           <button class="tybtn" id="bt-c" onclick="setType('cardio')">🏃 有氧 / 跑步</button>
         </div>
         <div id="sf">
+          <!-- Exercise Picker -->
+          <div class="ex-picker">
+            <div class="card-lbl" style="margin-bottom:8px">快速選擇動作</div>
+            <div class="ex-picker-cats" id="ex-cats"></div>
+            <div class="ex-picker-grid" id="ex-grid"></div>
+          </div>
           <div id="exlist"></div>
-          <button class="btn btn-sm" onclick="addEx()" style="margin-bottom:1rem">＋ 新增動作</button>
+          <button class="btn btn-sm" onclick="addEx()" style="margin-bottom:1rem">＋ 自訂動作</button>
         </div>
         <div id="cf" style="display:none">
           <div class="grid2">
@@ -252,7 +313,10 @@ canvas{display:block}
         </div>
         <div class="divider"></div>
         <div class="field"><label>備註</label><input id="note" placeholder="今天的感受..."></div>
-        <button class="btn btn-accent" onclick="saveWorkout()" style="width:100%">儲存並同步雲端 ☁️</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-accent" onclick="saveWorkout()" style="flex:1">儲存並同步雲端 ☁️</button>
+          <button class="btn btn-sm" onclick="saveTplPrompt()" title="另存為範本">💾 存範本</button>
+        </div>
       </div>
     </div>
 
@@ -266,7 +330,7 @@ canvas{display:block}
           <div class="field"><label>體重（kg）</label><input type="number" id="b-weight" placeholder="65" step="0.1" min="20" max="300"></div>
           <div class="field"><label>體脂肪（%）</label><input type="number" id="b-fat" placeholder="20" step="0.1" min="3" max="60"></div>
         </div>
-        <div id="bmi-preview" style="margin-bottom:12px;font-size:13px;color:var(--muted)"></div>
+        <div id="bmi-preview" style="margin-bottom:12px;font-size:14px;color:var(--muted)"></div>
         <button class="btn btn-accent" onclick="saveBody()" style="width:100%">儲存身體數據 ☁️</button>
       </div>
       <div class="mrow4" id="body-metrics">
@@ -276,19 +340,51 @@ canvas{display:block}
         <div class="mcard"><div class="mval warn" id="bm-bmi">—</div><div class="mlbl">BMI</div></div>
       </div>
       <div class="grid2">
-        <div class="card">
-          <div class="card-lbl">體重趨勢</div>
-          <div class="chart-wrap"><canvas id="wChart"></canvas></div>
+        <div class="card"><div class="card-lbl">體重趨勢</div><div class="chart-wrap"><canvas id="wChart"></canvas></div></div>
+        <div class="card"><div class="card-lbl">體脂肪趨勢</div><div class="chart-wrap"><canvas id="fChart"></canvas></div></div>
+      </div>
+      <div class="card"><div class="card-lbl">歷史紀錄</div><div id="body-history"><div style="color:var(--muted);font-size:14px">尚無紀錄</div></div></div>
+    </div>
+
+    <!-- DIET -->
+    <div id="pg-diet" class="pg">
+      <div class="pg-title">🥗 飲食記錄</div>
+      <div class="card">
+        <div class="card-lbl">新增食物</div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div class="field" style="flex:1;margin-bottom:0">
+            <label>食物名稱</label>
+            <input id="diet-input" placeholder="例：茶葉蛋、雞腿便當..." onkeydown="if(event.key==='Enter')dietAdd()">
+          </div>
+          <div class="field" style="width:110px;margin-bottom:0">
+            <label>餐別</label>
+            <select id="diet-meal">
+              <option value="早餐">☀️ 早餐</option>
+              <option value="午餐">🌤️ 午餐</option>
+              <option value="晚餐">🌙 晚餐</option>
+              <option value="點心">🍎 點心</option>
+            </select>
+          </div>
+          <button class="btn btn-accent" onclick="dietAdd()" style="margin-bottom:0;white-space:nowrap">AI 分析 ✨</button>
         </div>
-        <div class="card">
-          <div class="card-lbl">體脂肪趨勢</div>
-          <div class="chart-wrap"><canvas id="fChart"></canvas></div>
-        </div>
+        <div id="diet-analyzing" style="display:none" class="diet-analyzing">Gemini 分析中...</div>
       </div>
       <div class="card">
-        <div class="card-lbl">歷史紀錄</div>
-        <div id="body-history"><div style="color:var(--muted);font-size:13px">尚無紀錄</div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <div class="card-lbl" style="margin-bottom:0">今日熱量</div>
+          <div style="font-size:13px;color:var(--muted)">目標：<span id="cal-goal-val">2000</span> kcal</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:10px">
+          <div><span style="font-size:28px;font-weight:800;color:var(--accent)" id="cal-today">0</span><span style="font-size:13px;color:var(--muted)"> kcal</span></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:13px;color:var(--muted)">蛋白質 <strong id="mac-p" style="color:var(--blue)">0g</strong></span>
+            <span style="font-size:13px;color:var(--muted)">碳水 <strong id="mac-c" style="color:var(--warn)">0g</strong></span>
+            <span style="font-size:13px;color:var(--muted)">脂肪 <strong id="mac-f" style="color:var(--purple)">0g</strong></span>
+          </div>
+        </div>
+        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-bar" style="width:0%"></div></div>
       </div>
+      <div id="diet-list"></div>
     </div>
 
     <!-- AI -->
@@ -298,18 +394,28 @@ canvas{display:block}
         <div class="card-lbl">快速提問</div>
         <div class="ai-chips">
           <button class="ai-chip" onclick="aiAsk('根據我最近的訓練，幫我分析優缺點並給出建議')">📊 分析我的訓練</button>
-          <button class="ai-chip" onclick="aiAsk('根據我的身體數據（體重、體脂）幫我設定合理的健身目標')">🎯 設定目標</button>
-          <button class="ai-chip" onclick="aiAsk('根據我最近的訓練紀錄，幫我設計下週的訓練計畫')">📅 設計下週計畫</button>
+          <button class="ai-chip" onclick="aiAsk('根據我的身體數據幫我設定合理的健身目標')">🎯 設定目標</button>
+          <button class="ai-chip" onclick="aiAsk('根據我最近的訓練紀錄，幫我設計下週完整訓練計畫，請列出每天的動作、組數、次數')">📅 設計下週計畫</button>
           <button class="ai-chip" onclick="aiAsk('我的臥推停滯了，給我突破瓶頸的建議')">💪 突破瓶頸</button>
           <button class="ai-chip" onclick="aiAsk('根據我的訓練頻率和強度，幫我評估恢復狀況')">😴 評估恢復</button>
           <button class="ai-chip" onclick="aiAsk('幫我分析哪些肌群訓練不足，需要加強')">🏋️ 肌群分析</button>
+          <button class="ai-chip" onclick="genWeeklyReport()">📝 本週週報</button>
         </div>
         <div class="ai-input-row">
-          <input id="ai-q" placeholder="輸入你的問題，AI 教練會根據你的訓練資料回答..." onkeydown="if(event.key==='Enter')aiAsk()">
+          <input id="ai-q" placeholder="輸入你的問題..." onkeydown="if(event.key==='Enter')aiAsk()">
           <button class="btn btn-purple" onclick="aiAsk()">發送 ↗</button>
         </div>
       </div>
       <div id="ai-chat"></div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div id="pg-templates" class="pg">
+      <div class="pg-title">📋 訓練範本</div>
+      <div class="card">
+        <div class="card-lbl">我的範本</div>
+        <div id="tpl-list"><div class="empty">尚無範本，在新增訓練頁儲存課表後會出現在這裡</div></div>
+      </div>
     </div>
 
     <!-- HISTORY -->
@@ -325,7 +431,7 @@ canvas{display:block}
         <div class="card-lbl">動作重量趨勢</div>
         <div class="sel-ex" id="exbtnlist"></div>
         <div id="pr-row" style="display:none;margin-bottom:10px">
-          <span style="font-size:12px;color:var(--muted)">個人最佳 PR：</span>
+          <span style="font-size:13px;color:var(--muted)">個人最佳 PR：</span>
           <span class="prbadge" id="prval">—</span>
         </div>
         <div class="chart-wrap"><canvas id="pChart"></canvas></div>
@@ -343,7 +449,7 @@ canvas{display:block}
         <div class="card">
           <div class="card-lbl">連續天數</div>
           <div class="streak-big" id="stk">0</div>
-          <div style="margin-top:8px;font-size:13px;color:var(--muted)" id="stksub">快去訓練吧！</div>
+          <div style="margin-top:8px;font-size:14px;color:var(--muted)" id="stksub">快去訓練吧！</div>
         </div>
         <div class="card">
           <div class="card-lbl">本月統計</div>
@@ -359,18 +465,31 @@ canvas{display:block}
       </div>
     </div>
 
-
     <!-- SETTINGS -->
     <div id="pg-settings" class="pg">
       <div class="pg-title">⚙️ 設定</div>
       <div class="card">
         <div class="card-lbl">Gemini API Key</div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;line-height:1.7">請輸入你的 Gemini API Key，儲存在本機瀏覽器中，不會上傳至任何伺服器。<br>取得 Key：<a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">Google AI Studio</a></p>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:1rem;line-height:1.7">儲存在本機瀏覽器，不上傳伺服器。取得 Key：<a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent)">Google AI Studio</a></p>
         <div class="field"><label>API Key</label><input type="password" id="gemini-key-input" placeholder="AQ.Ab8RN..."></div>
         <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
           <button class="btn btn-accent" onclick="saveApiKey()">儲存</button>
           <button class="btn btn-del btn-sm" onclick="clearApiKey()">清除</button>
-          <span id="key-status" style="font-size:12px;color:var(--muted)"></span>
+          <span id="key-status" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">每日熱量目標</div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div class="field" style="flex:1;margin-bottom:0"><label>目標 kcal</label><input type="number" id="cal-goal-input" placeholder="2000" min="500" max="5000"></div>
+          <button class="btn btn-accent" onclick="saveCalGoal()" style="margin-bottom:0">儲存</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">顯示模式</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="btn-dark" onclick="setTheme('dark')">🌙 深色</button>
+          <button class="btn" id="btn-light" onclick="setTheme('light')">☀️ 淺色</button>
         </div>
       </div>
     </div>
@@ -380,8 +499,9 @@ canvas{display:block}
 <nav class="mobnav">
   <button class="mobnav-btn on" id="mn-log" onclick="go('log')"><span class="mobnav-icon">＋</span>記錄</button>
   <button class="mobnav-btn" id="mn-body" onclick="go('body')"><span class="mobnav-icon">⚖️</span>身體</button>
+  <button class="mobnav-btn" id="mn-diet" onclick="go('diet')"><span class="mobnav-icon">🥗</span>飲食</button>
   <button class="mobnav-btn" id="mn-ai" onclick="go('ai')"><span class="mobnav-icon">🤖</span>AI</button>
-  <button class="mobnav-btn" id="mn-history" onclick="go('history')"><span class="mobnav-icon">📋</span>歷史</button>
+  <button class="mobnav-btn" id="mn-history" onclick="go('history')"><span class="mobnav-icon">🕐</span>歷史</button>
   <button class="mobnav-btn" id="mn-progress" onclick="go('progress')"><span class="mobnav-icon">📈</span>分析</button>
   <button class="mobnav-btn" id="mn-habit" onclick="go('habit')"><span class="mobnav-icon">📅</span>打卡</button>
 </nav>
@@ -408,8 +528,7 @@ const firebaseConfig = {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
-window._auth = auth;
-window._db = db;
+window._auth = auth; window._db = db;
 window._fbFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, getDocs, query, orderBy, serverTimestamp };
 
 onAuthStateChanged(auth, user => {
@@ -422,21 +541,41 @@ onAuthStateChanged(auth, user => {
   } else {
     document.getElementById('auth-screen').style.display='flex';
     document.getElementById('app-screen').style.display='none';
-    window._uid = null;
-    window._WK = []; window._BD = [];
+    window._uid = null; window._WK = []; window._BD = []; window._DT = [];
   }
 });
 </script>
 
 <script>
-window._WK = [];
-window._BD = [];
+window._WK = []; window._BD = []; window._DT = [];
 window._uid = null;
 var curType = 'strength';
 var exCount = 0;
 var selEx = null;
 var aiHistory = [];
-var PRESETS = ['臥推','深蹲','硬舉','引體向上','肩押','槓鈴划船','二頭彎舉','三頭下壓','腿推','弓步蹲','腹肌訓練'];
+var restInterval = null;
+var restSecs = 0;
+
+// ── Exercise library ─────────────────────────────────────
+var EX_CATS = {
+  '胸部':['臥推','上斜臥推','下斜臥推','蝴蝶機夾胸','啞鈴飛鳥','機械胸推'],
+  '背部':['引體向上','槓鈴划船','坐姿划船','滑輪下拉','單臂划船','T-Bar划船'],
+  '腿部':['深蹲','腿推','硬舉','羅馬尼亞硬舉','腿彎舉','腿伸展','弓步蹲','保加利亞深蹲'],
+  '肩部':['肩推','啞鈴側平舉','前平舉','啞鈴肩推','槓鈴肩推','俯身側平舉'],
+  '手臂':['二頭彎舉','錘式彎舉','三頭下壓','臂屈伸','窄握臥推','過頭三頭'],
+  '核心':['腹肌訓練','棒式','捲腹','懸掛舉腿','俄羅斯轉體','側捲腹']
+};
+var selCat = '胸部';
+
+function renderExPicker(){
+  var cats = Object.keys(EX_CATS);
+  document.getElementById('ex-cats').innerHTML = cats.map(function(c){
+    return '<button class="cat-btn'+(c===selCat?' on':'')+'" onclick="selCat=\''+c+'\';renderExPicker()">'+c+'</button>';
+  }).join('');
+  document.getElementById('ex-grid').innerHTML = EX_CATS[selCat].map(function(n){
+    return '<button class="ex-tile" onclick="addEx(\''+n+'\')">'+n+'</button>';
+  }).join('');
+}
 
 // ── Auth ────────────────────────────────────────────────
 var authMode = 'login';
@@ -461,7 +600,7 @@ function doAuth(){
 }
 function doLogout(){ window._fbFns.signOut(window._auth); }
 
-// ── Sync status ─────────────────────────────────────────
+// ── Sync ────────────────────────────────────────────────
 function syncStatus(s){
   var dot=document.getElementById('sync-dot');var txt=document.getElementById('sync-txt');
   if(!dot) return;
@@ -469,7 +608,7 @@ function syncStatus(s){
   txt.textContent=s==='syncing'?'同步中...':s==='err'?'同步失敗':'已同步 ☁️';
 }
 
-// ── Firebase load/push ──────────────────────────────────
+// ── Firebase ─────────────────────────────────────────────
 async function loadAll(){
   if(!window._uid) return;
   try{
@@ -478,8 +617,9 @@ async function loadAll(){
     window._WK=[];wSnap.forEach(function(d){window._WK.push(d.data());});
     var bSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'body'),fns.orderBy('createdAt','desc')));
     window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
-    syncStatus('ok');
-    updateBodyMetrics();
+    var dSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'diet'),fns.orderBy('createdAt','desc')));
+    window._DT=[];dSnap.forEach(function(d){window._DT.push(d.data());});
+    syncStatus('ok'); updateBodyMetrics(); renderDiet();
   } catch(e){ syncStatus('err'); console.error(e); }
 }
 async function push(colName,data){
@@ -494,7 +634,7 @@ async function push(colName,data){
 }
 
 // ── Nav ─────────────────────────────────────────────────
-var PAGES=['log','body','ai','history','progress','habit','settings'];
+var PAGES=['log','body','diet','ai','templates','history','progress','habit','settings'];
 function go(p){
   document.querySelectorAll('.pg').forEach(function(e){e.classList.remove('on');});
   document.querySelectorAll('.nav').forEach(function(e){e.classList.remove('on');});
@@ -508,6 +648,8 @@ function go(p){
   if(p==='habit') renderHabit();
   if(p==='body') renderBody();
   if(p==='ai') renderAiChat();
+  if(p==='diet') renderDiet();
+  if(p==='templates') renderTemplates();
   if(p==='settings') renderSettings();
 }
 
@@ -526,28 +668,59 @@ function cpace(){
   else document.getElementById('cpacein').value='';
 }
 
+// ── Last used weights ────────────────────────────────────
+function getLastSets(name){
+  for(var i=0;i<window._WK.length;i++){
+    var ex=(window._WK[i].exercises||[]).find(function(e){return e.name===name;});
+    if(ex) return ex.sets;
+  }
+  return null;
+}
+
 // ── Exercise blocks ──────────────────────────────────────
 function addEx(name){
   name=name||'';var id=exCount++;
-  var dl=PRESETS.map(function(n){return '<option value="'+n+'">';}).join('');
+  var lastSets=name?getLastSets(name):null;
   var div=document.createElement('div');div.className='exblock';div.id='ex-'+id;
+  var lastHint=lastSets?'上次：'+lastSets.map(function(s){return s.weight+'kg×'+s.reps;}).join(' / '):'';
+  var allNames=[].concat.apply([],Object.values(EX_CATS));
+  var dl=allNames.map(function(n){return '<option value="'+n+'">';}).join('');
   div.innerHTML='<datalist id="dl'+id+'">'+dl+'</datalist>'+
-    '<div class="exhead"><input list="dl'+id+'" class="exname" id="en'+id+'" placeholder="動作名稱" value="'+name+'">'+
+    '<div class="exhead"><input list="dl'+id+'" class="exname" id="en'+id+'" placeholder="動作名稱" value="'+name+'" onchange="onExNameChange('+id+')">'+
+    '<button class="btn btn-sm" onclick="startRest()" title="組間計時">⏱</button>'+
     '<button class="btn btn-sm btn-del" onclick="document.getElementById(\'ex-'+id+'\').remove();upd()">✕</button></div>'+
+    (lastHint?'<div class="ex-last">'+lastHint+'</div>':'')+
     '<div class="sets-hdr"><span></span><span>重量 kg</span><span>次數</span><span>訓練量</span><span></span></div>'+
     '<div id="sr'+id+'"></div><button class="addset" onclick="addSet('+id+')">＋ 新增一組</button>';
   document.getElementById('exlist').appendChild(div);
-  addSet(id);addSet(id);addSet(id);
+  if(lastSets&&lastSets.length){
+    lastSets.forEach(function(s){addSet(id,s.weight,s.reps);});
+  } else {
+    addSet(id);addSet(id);addSet(id);
+  }
 }
-function addSet(eid){
+function onExNameChange(id){
+  var name=document.getElementById('en'+id).value.trim();
+  var lastSets=name?getLastSets(name):null;
+  var block=document.getElementById('ex-'+id);
+  var old=block.querySelector('.ex-last');
+  if(old) old.remove();
+  if(lastSets){
+    var hint=document.createElement('div');hint.className='ex-last';
+    hint.textContent='上次：'+lastSets.map(function(s){return s.weight+'kg×'+s.reps;}).join(' / ');
+    block.querySelector('.sets-hdr').before(hint);
+  }
+}
+function addSet(eid,w,r){
   var c=document.getElementById('sr'+eid);var n=c.children.length+1;
   var row=document.createElement('div');row.className='setrow';
   row.innerHTML='<span class="setnum">'+n+'</span>'+
-    '<input type="number" class="setin win" placeholder="60" min="0" step="2.5" oninput="cv(this)">'+
-    '<input type="number" class="setin rin" placeholder="10" min="0" oninput="cv(this)">'+
-    '<span class="vout">—</span>'+
+    '<input type="number" class="setin win" placeholder="60" min="0" step="2.5" value="'+(w||'')+'" oninput="cv(this)">'+
+    '<input type="number" class="setin rin" placeholder="10" min="0" value="'+(r||'')+'" oninput="cv(this)">'+
+    '<span class="vout">'+(w&&r?w*r+'kg':'—')+'</span>'+
     '<button class="delbtn" onclick="this.parentElement.remove();upd()">×</button>';
   c.appendChild(row);
+  if(w&&r) upd();
 }
 function cv(el){
   var row=el.parentElement;
@@ -567,6 +740,31 @@ function upd(){
   document.getElementById('mv').textContent=vol;
   document.getElementById('ms').textContent=sets;
   document.getElementById('me').textContent=ex;
+}
+
+// ── Rest Timer ───────────────────────────────────────────
+function startRest(){
+  restSecs = parseInt(localStorage.getItem('rest_secs')||'90');
+  document.getElementById('rest-timer').classList.add('show');
+  clearInterval(restInterval);
+  tickRest();
+  restInterval=setInterval(tickRest,1000);
+}
+function tickRest(){
+  document.getElementById('rest-time').textContent=restSecs;
+  if(restSecs<=0){
+    clearInterval(restInterval);
+    document.getElementById('rest-time').textContent='GO!';
+    setTimeout(stopRest,1500);
+  } else restSecs--;
+}
+function stopRest(){
+  clearInterval(restInterval);
+  document.getElementById('rest-timer').classList.remove('show');
+}
+function adjRest(d){
+  restSecs=Math.max(5,restSecs+d);
+  document.getElementById('rest-time').textContent=restSecs;
 }
 
 // ── Save workout ─────────────────────────────────────────
@@ -591,35 +789,77 @@ async function saveWorkout(){
     w.cardio={time:t,distance:d,pace:document.getElementById('cpacein').value};
   }
   window._WK.unshift(w);await push('workouts',w);
+  resetLogForm();
+  toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
+}
+function resetLogForm(){
   document.getElementById('exlist').innerHTML='';
   document.getElementById('note').value='';document.getElementById('ct').value='';document.getElementById('cd').value='';document.getElementById('cpacein').value='';
   exCount=0;selEx=null;
   document.getElementById('mv').textContent='0';document.getElementById('ms').textContent='0';document.getElementById('me').textContent='0';
-  toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
+  addEx('臥推');
 }
 
-// ── Settings / API Key ───────────────────────────────────
-function saveApiKey(){
-  var k=document.getElementById('gemini-key-input').value.trim();
-  if(!k){toast('請輸入 API Key！',1);return;}
-  localStorage.setItem('gemini_api_key',k);
-  document.getElementById('key-status').textContent='✓ 已儲存';
-  document.getElementById('gemini-key-input').value='';
-  toast('✓ API Key 已儲存！');
+// ── Templates ────────────────────────────────────────────
+function saveTplPrompt(){
+  var name=prompt('範本名稱：');
+  if(!name) return;
+  var exs=[];
+  document.querySelectorAll('.exblock').forEach(function(b){
+    var id=b.id.split('-')[1];var nm=(document.getElementById('en'+id)||{value:''}).value.trim();
+    if(!nm) return;var sets=[];
+    document.querySelectorAll('#sr'+id+' .setrow').forEach(function(row){
+      var wt=parseFloat(row.querySelector('.win').value)||0;var rp=parseFloat(row.querySelector('.rin').value)||0;
+      sets.push({weight:wt||0,reps:rp||0});
+    });
+    if(sets.length) exs.push({name:nm,sets:sets});
+  });
+  if(!exs.length){toast('沒有動作可儲存',1);return;}
+  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
+  tpls.unshift({name:name,exercises:exs,date:new Date().toISOString().slice(0,10)});
+  localStorage.setItem('tpls',JSON.stringify(tpls));
+  toast('✓ 範本「'+name+'」已儲存！');
 }
-function clearApiKey(){
-  localStorage.removeItem('gemini_api_key');
-  document.getElementById('gemini-key-input').value='';
-  document.getElementById('key-status').textContent='已清除';
-  toast('API Key 已清除');
+function loadTpl(idx){
+  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
+  var tpl=tpls[idx];if(!tpl) return;
+  document.getElementById('exlist').innerHTML='';exCount=0;
+  tpl.exercises.forEach(function(e){addEx(e.name);});
+  go('log');toast('✓ 已套用範本「'+tpl.name+'」');
 }
-function renderSettings(){
-  var k=localStorage.getItem('gemini_api_key');
-  document.getElementById('key-status').textContent=k?'✓ 已設定 Key':'尚未設定';
-  document.getElementById('gemini-key-input').value='';
+function deleteTpl(idx){
+  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
+  tpls.splice(idx,1);localStorage.setItem('tpls',JSON.stringify(tpls));
+  renderTemplates();toast('範本已刪除');
+}
+function renderTemplates(){
+  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
+  var el=document.getElementById('tpl-list');
+  if(!tpls.length){el.innerHTML='<div class="empty">尚無範本，在新增訓練頁儲存課表後會出現在這裡</div>';return;}
+  el.innerHTML=tpls.map(function(t,i){
+    return '<div class="tpl-item">'+
+      '<div><div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.exercises.map(function(e){return e.name;}).join('、')+'</div></div>'+
+      '<div style="display:flex;gap:6px">'+
+        '<button class="btn btn-sm btn-accent" onclick="loadTpl('+i+')">套用</button>'+
+        '<button class="btn btn-sm btn-del" onclick="deleteTpl('+i+')">刪除</button>'+
+      '</div></div>';
+  }).join('');
 }
 
-addEx('臥推');
+// ── Apply AI workout plan ────────────────────────────────
+function applyAiPlan(text){
+  var lines=text.split('\n');
+  var exs=[];
+  lines.forEach(function(l){
+    Object.values(EX_CATS).flat().forEach(function(name){
+      if(l.includes(name)&&!exs.includes(name)) exs.push(name);
+    });
+  });
+  if(!exs.length){toast('無法從回答中解析動作，請手動新增',1);return;}
+  document.getElementById('exlist').innerHTML='';exCount=0;
+  exs.forEach(function(n){addEx(n);});
+  go('log');toast('✓ 已套用 AI 課表，共 '+exs.length+' 個動作！');
+}
 
 // ── Body data ────────────────────────────────────────────
 document.addEventListener('input', function(e){
@@ -634,7 +874,6 @@ function previewBMI(){
 }
 function bmiClass(b){ return b<18.5?'bmi-under':b<24?'bmi-normal':b<28?'bmi-over':'bmi-obese'; }
 function bmiLabel(b){ return b<18.5?'體重過輕':b<24?'正常':b<28?'過重':'肥胖'; }
-
 async function saveBody(){
   var h=parseFloat(document.getElementById('b-height').value);
   var w=parseFloat(document.getElementById('b-weight').value);
@@ -647,7 +886,6 @@ async function saveBody(){
   document.getElementById('bmi-preview').innerHTML='';
   toast('✓ 身體數據已儲存！');renderBody();updateBodyMetrics();
 }
-
 function updateBodyMetrics(){
   if(!window._BD.length) return;
   var latest=window._BD[0];
@@ -656,23 +894,18 @@ function updateBodyMetrics(){
   document.getElementById('bm-fat').textContent=latest.fat!=null?latest.fat+'%':'—';
   document.getElementById('bm-bmi').textContent=latest.bmi||'—';
 }
-
 function renderBody(){
   updateBodyMetrics();
-  // weight chart
   var pts=window._BD.filter(function(b){return b.weight;}).slice(0,12).reverse();
   if(pts.length) drawLine('wChart',pts.map(function(b){return b.date.slice(5);}),pts.map(function(b){return b.weight;}),'#6ee4f0');
   else{var cv=clearCanvas('wChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
-  // fat chart
   var fpts=window._BD.filter(function(b){return b.fat!=null;}).slice(0,12).reverse();
   if(fpts.length) drawLine('fChart',fpts.map(function(b){return b.date.slice(5);}),fpts.map(function(b){return b.fat;}),'#b8a4f8');
   else{var cv=clearCanvas('fChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
-  // history list
   var el=document.getElementById('body-history');
-  if(!window._BD.length){el.innerHTML='<div style="color:var(--muted);font-size:13px">尚無紀錄</div>';return;}
+  if(!window._BD.length){el.innerHTML='<div style="color:var(--muted);font-size:14px">尚無紀錄</div>';return;}
   el.innerHTML=window._BD.slice(0,10).map(function(b){
-    return '<div class="bodyitem">'+
-      '<span class="bodyitem-date">'+b.date+'</span>'+
+    return '<div class="bodyitem"><span class="bodyitem-date">'+b.date+'</span>'+
       '<div class="bodyitem-vals">'+
         (b.height?'<div class="bodyval">'+b.height+'<span>身高</span></div>':'')+
         '<div class="bodyval">'+b.weight+'<span>體重</span></div>'+
@@ -682,44 +915,95 @@ function renderBody(){
   }).join('');
 }
 
+// ── Diet ─────────────────────────────────────────────────
+async function dietAdd(){
+  var food=document.getElementById('diet-input').value.trim();
+  var meal=document.getElementById('diet-meal').value;
+  if(!food){toast('請輸入食物名稱',1);return;}
+  var key=localStorage.getItem('gemini_api_key');
+  if(!key){toast('請先設定 Gemini API Key',1);return;}
+  document.getElementById('diet-analyzing').style.display='block';
+  document.getElementById('diet-input').value='';
+  try{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:'請分析「'+food+'」的營養成分，回傳JSON格式（不要有任何說明文字或markdown，只有純JSON）：{"name":"食物名稱","calories":熱量數字,"protein":蛋白質克數,"carbs":碳水克數,"fat":脂肪克數}。數字請用整數或一位小數。'}]}]
+      })
+    });
+    var data=await res.json();
+    var txt=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'';
+    txt=txt.replace(/```json|```/g,'').trim();
+    var info=JSON.parse(txt);
+    var rec={date:new Date().toISOString().slice(0,10),meal:meal,name:info.name||food,calories:info.calories||0,protein:info.protein||0,carbs:info.carbs||0,fat:info.fat||0};
+    window._DT.unshift(rec);await push('diet',rec);
+    renderDiet();toast('✓ 已記錄 '+rec.name+'（'+rec.calories+' kcal）');
+  } catch(e){
+    toast('分析失敗，請重試',1);console.error(e);
+  }
+  document.getElementById('diet-analyzing').style.display='none';
+}
+function renderDiet(){
+  var today=new Date().toISOString().slice(0,10);
+  var todayItems=window._DT.filter(function(d){return d.date===today;});
+  var totalCal=todayItems.reduce(function(a,d){return a+d.calories;},0);
+  var totalP=todayItems.reduce(function(a,d){return a+d.protein;},0);
+  var totalC=todayItems.reduce(function(a,d){return a+d.carbs;},0);
+  var totalF=todayItems.reduce(function(a,d){return a+d.fat;},0);
+  var goal=parseInt(localStorage.getItem('cal_goal')||'2000');
+  document.getElementById('cal-today').textContent=totalCal;
+  document.getElementById('cal-goal-val').textContent=goal;
+  document.getElementById('mac-p').textContent=totalP.toFixed(0)+'g';
+  document.getElementById('mac-c').textContent=totalC.toFixed(0)+'g';
+  document.getElementById('mac-f').textContent=totalF.toFixed(0)+'g';
+  document.getElementById('cal-bar').style.width=Math.min(100,Math.round(totalCal/goal*100))+'%';
+  var meals=['早餐','午餐','晚餐','點心'];
+  var el=document.getElementById('diet-list');
+  var html='';
+  meals.forEach(function(m){
+    var items=todayItems.filter(function(d){return d.meal===m;});
+    if(!items.length) return;
+    html+='<div class="card"><div class="meal-section"><div class="meal-title"><span>'+m+'</span><span style="color:var(--muted);font-size:13px">'+items.reduce(function(a,d){return a+d.calories;},0)+' kcal</span></div>';
+    items.forEach(function(d){
+      html+='<div class="food-item"><div><div class="food-name">'+d.name+'</div><div class="food-macros">蛋白質 '+d.protein+'g · 碳水 '+d.carbs+'g · 脂肪 '+d.fat+'g</div></div><div class="food-cals">'+d.calories+' kcal</div></div>';
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html||'<div class="card"><div class="empty" style="padding:1.5rem">今日尚未記錄飲食</div></div>';
+}
+
 // ── AI Coach ─────────────────────────────────────────────
 function buildContext(){
   var latest=window._BD[0]||{};
   var recentWk=window._WK.slice(0,10);
   var exNames=[...new Set(window._WK.flatMap(function(w){return (w.exercises||[]).map(function(e){return e.name;});}))];
-  var prMap={};
-  exNames.forEach(function(n){prMap[n]=pr(n);});
-  return '【用戶健身資料】\n'+
-    '身體數據（最新）：身高 '+(latest.height||'未記錄')+'cm，體重 '+(latest.weight||'未記錄')+'kg，體脂 '+(latest.fat!=null?latest.fat+'%':'未記錄')+'，BMI '+(latest.bmi||'未記錄')+'\n'+
-    '最近10次訓練：\n'+recentWk.map(function(w,i){
+  var prMap={};exNames.forEach(function(n){prMap[n]=pr(n);});
+  var today=new Date().toISOString().slice(0,10);
+  var todayDiet=window._DT.filter(function(d){return d.date===today;});
+  var dietStr=todayDiet.length?todayDiet.map(function(d){return d.name+'('+d.calories+'kcal)';}).join('、'):'未記錄';
+  return '【用戶健身資料】\n身體數據：身高 '+(latest.height||'未記錄')+'cm，體重 '+(latest.weight||'未記錄')+'kg，體脂 '+(latest.fat!=null?latest.fat+'%':'未記錄')+'，BMI '+(latest.bmi||'未記錄')+
+    '\n最近10次訓練：\n'+recentWk.map(function(w,i){
       if(w.type==='cardio'&&w.cardio) return (i+1)+'. '+w.date+' 有氧：'+w.cardio.time+'分鐘'+(w.cardio.distance?' '+w.cardio.distance+'km':'');
       var vol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
-      var exStr=(w.exercises||[]).map(function(e){return e.name+'('+e.sets.length+'組)';}).join('、');
-      return (i+1)+'. '+w.date+' 重訓：'+exStr+'，總量'+vol+'kg';
+      return (i+1)+'. '+w.date+' 重訓：'+(w.exercises||[]).map(function(e){return e.name+'('+e.sets.length+'組)';}).join('、')+'，總量'+vol+'kg';
     }).join('\n')+
     '\n各動作 PR：'+Object.entries(prMap).map(function(kv){return kv[0]+' '+kv[1]+'kg';}).join('、')+
+    '\n今日飲食：'+dietStr+
     '\n\n請用繁體中文回答，給出專業、具體、有依據的建議。';
 }
 
-
 function mdRender(text){
-  text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  var lines = text.split('\n');
-  var out = [];
-  var inList = false;
+  text=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var lines=text.split('\n');var out=[];var inList=false;
   for(var i=0;i<lines.length;i++){
-    var l = lines[i];
+    var l=lines[i];
     if(!l.trim()){if(inList){out.push('</ul>');inList=false;}out.push('');continue;}
-    // headers
     if(l.match(/^### /)){if(inList){out.push('</ul>');inList=false;}out.push('<h3>'+fmt(l.slice(4))+'</h3>');continue;}
     if(l.match(/^## /)){if(inList){out.push('</ul>');inList=false;}out.push('<h3>'+fmt(l.slice(3))+'</h3>');continue;}
     if(l.match(/^#### /)){if(inList){out.push('</ul>');inList=false;}out.push('<h4>'+fmt(l.slice(5))+'</h4>');continue;}
-    // hr
     if(l.match(/^---/)){if(inList){out.push('</ul>');inList=false;}out.push('<hr>');continue;}
-    // list items
     if(l.match(/^[-*] /)){if(!inList){out.push('<ul>');inList=true;}out.push('<li>'+fmt(l.slice(2))+'</li>');continue;}
     if(l.match(/^\d+\. /)){if(!inList){out.push('<ul>');inList=true;}out.push('<li>'+fmt(l.replace(/^\d+\. /,''))+'</li>');continue;}
-    // paragraph
     if(inList){out.push('</ul>');inList=false;}
     out.push('<p>'+fmt(l)+'</p>');
   }
@@ -727,8 +1011,8 @@ function mdRender(text){
   return out.join('');
 }
 function fmt(t){
-  t = t.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
-  t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');
+  t=t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
   return t;
 }
 
@@ -736,8 +1020,9 @@ function renderAiChat(){
   var chat=document.getElementById('ai-chat');
   if(!aiHistory.length){chat.innerHTML='';return;}
   chat.innerHTML=aiHistory.map(function(m){
-    var body = (m.role==='assistant'&&!m.typing) ? mdRender(m.content) : m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+body+'</div>';
+    var body=(m.role==='assistant'&&!m.typing)?mdRender(m.content):m.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var applyBtn=(m.role==='assistant'&&!m.typing&&m.hasPlan)?'<button class="ai-apply-btn" onclick="applyAiPlan(aiHistory['+m.idx+'].raw)">🏋️ 套用此課表</button>':'';
+    return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+body+applyBtn+'</div>';
   }).join('');
   chat.scrollTop=chat.scrollHeight;
 }
@@ -747,34 +1032,76 @@ async function aiAsk(question){
   if(!q) return;
   document.getElementById('ai-q').value='';
   aiHistory.push({role:'user',content:q});
-  aiHistory.push({role:'assistant',content:'思考中...✦',typing:true});
+  var thinkIdx=aiHistory.length;
+  aiHistory.push({role:'assistant',content:'思考中...✦',typing:true,idx:thinkIdx});
   renderAiChat();
-
   var ctx=buildContext();
-  var messages=[{role:'user',content:ctx+'\n\n用戶問題：'+q}];
-
   try{
-    var GEMINI_KEY=localStorage.getItem('gemini_api_key');
-    if(!GEMINI_KEY){aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 請先至「設定」頁面輸入 Gemini API Key。',typing:false};renderAiChat();return;}
-    var systemPrompt='你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持你的建議。';
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+GEMINI_KEY,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+    var key=localStorage.getItem('gemini_api_key');
+    if(!key){aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 請先至「設定」頁面輸入 Gemini API Key。',typing:false};renderAiChat();return;}
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        system_instruction:{parts:[{text:systemPrompt}]},
+        system_instruction:{parts:[{text:'你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持建議。'}]},
         contents:[{role:'user',parts:[{text:ctx+'\n\n用戶問題：'+q}]}]
       })
     });
     var data=await res.json();
     var reply=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'抱歉，無法取得回應。';
-    aiHistory[aiHistory.length-1]={role:'assistant',content:reply,typing:false};
+    var hasPlan=reply.includes('組')&&reply.includes('次');
+    var idx=aiHistory.length-1;
+    aiHistory[idx]={role:'assistant',content:reply,raw:reply,typing:false,hasPlan:hasPlan,idx:idx};
   } catch(e){
     aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 連線失敗，請確認網路連線後重試。',typing:false};
   }
   renderAiChat();
 }
 
-// ── Toast ───────────────────────────────────────────────
+async function genWeeklyReport(){
+  var q='請根據我本週的訓練紀錄，生成一份週報摘要：包含訓練天數、總訓練量、各肌群訓練情況、本週最佳表現，以及下週建議。';
+  aiAsk(q);
+}
+
+// ── Settings ─────────────────────────────────────────────
+function saveApiKey(){
+  var k=document.getElementById('gemini-key-input').value.trim();
+  if(!k){toast('請輸入 API Key！',1);return;}
+  localStorage.setItem('gemini_api_key',k);
+  document.getElementById('key-status').textContent='✓ 已儲存';
+  document.getElementById('gemini-key-input').value='';
+  toast('✓ API Key 已儲存！');
+}
+function clearApiKey(){
+  localStorage.removeItem('gemini_api_key');
+  document.getElementById('gemini-key-input').value='';
+  document.getElementById('key-status').textContent='已清除';
+  toast('API Key 已清除');
+}
+function saveCalGoal(){
+  var v=parseInt(document.getElementById('cal-goal-input').value);
+  if(!v||v<500){toast('請輸入有效熱量目標',1);return;}
+  localStorage.setItem('cal_goal',v);
+  toast('✓ 熱量目標已設定：'+v+' kcal');
+  renderDiet();
+}
+function setTheme(t){
+  document.body.classList.toggle('light',t==='light');
+  localStorage.setItem('theme',t);
+  document.getElementById('btn-dark').classList.toggle('btn-accent',t==='dark');
+  document.getElementById('btn-light').classList.toggle('btn-accent',t==='light');
+}
+function renderSettings(){
+  var k=localStorage.getItem('gemini_api_key');
+  document.getElementById('key-status').textContent=k?'✓ 已設定 Key':'尚未設定';
+  document.getElementById('gemini-key-input').value='';
+  var goal=localStorage.getItem('cal_goal')||'2000';
+  document.getElementById('cal-goal-input').value=goal;
+  var t=localStorage.getItem('theme')||'dark';
+  document.getElementById('btn-dark').classList.toggle('btn-accent',t==='dark');
+  document.getElementById('btn-light').classList.toggle('btn-accent',t==='light');
+}
+
+// ── Toast ────────────────────────────────────────────────
 function toast(msg,err){
   var t=document.getElementById('toast');
   t.textContent=msg;t.style.background=err?'var(--danger)':'var(--accent)';t.style.color=err?'#fff':'#000';
@@ -804,7 +1131,7 @@ function renderHist(){
     return '<div class="logitem"><div class="logitem-top"><span class="tag '+(w.type==='cardio'?'tag-c':'tag-s')+'">'+(w.type==='cardio'?'有氧':'重訓')+'</span>'+
       '<span class="logdate">'+w.date+'</span>'+(prex.length?'<span class="prbadge">🏆 PR</span>':'')+
       '</div><div class="logsub">'+sub+(w.note?' · '+w.note:'')+'</div>'+
-      (prex.length?'<div style="font-size:11px;color:var(--warn);margin-top:4px">創新高：'+prex.map(function(e){return e.name;}).join('、')+'</div>':'')+
+      (prex.length?'<div style="font-size:12px;color:var(--warn);margin-top:4px">創新高：'+prex.map(function(e){return e.name;}).join('、')+'</div>':'')+
     '</div>';
   }).join('');
 }
@@ -865,7 +1192,7 @@ function drawDonut(id,data,labels,colors){
 function renderProg(){
   var names=[...new Set(window._WK.flatMap(function(w){return (w.exercises||[]).map(function(e){return e.name;});}))];
   var c=document.getElementById('exbtnlist');c.innerHTML='';
-  if(!names.length){c.innerHTML='<span style="color:var(--muted);font-size:13px">還沒有重訓紀錄</span>';}
+  if(!names.length){c.innerHTML='<span style="color:var(--muted);font-size:14px">還沒有重訓紀錄</span>';}
   names.forEach(function(n){var btn=document.createElement('button');btn.className='exbtn'+(n===selEx?' on':'');btn.textContent=n;btn.onclick=function(){selEx=n;renderProg();};c.appendChild(btn);});
   if(selEx&&names.includes(selEx)){
     var prv=pr(selEx);document.getElementById('pr-row').style.display='';document.getElementById('prval').textContent=prv+'kg';
@@ -913,7 +1240,9 @@ function renderHabit(){
 }
 
 // ── Init ─────────────────────────────────────────────────
-
+var t=localStorage.getItem('theme')||'dark';
+if(t==='light') document.body.classList.add('light');
+renderExPicker();
 addEx('臥推');
 </script>
 </body>
