@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitLog 健身紀錄</title>
+<style>
+:root{
+  --bg:#0f0f0f;--surface:#191919;--s2:#222;--border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.18);--text:#f0ede8;--muted:#777;
+  --accent:#c8f06e;--blue:#6ee4f0;--warn:#f0c46e;--danger:#f07070;--purple:#b8a4f8;
+  --r:10px;--r-sm:7px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Helvetica Neue',sans-serif;font-size:14px;min-height:100vh}
+
+/* Auth */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;width:100%;max-width:380px}
+.auth-logo{font-size:26px;font-weight:800;color:var(--accent);margin-bottom:.25rem;letter-spacing:-1px}
+.auth-logo em{color:var(--text);font-style:normal;font-weight:300}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:1.75rem}
+.auth-tabs{display:flex;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden;margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:8px;font-size:13px;background:transparent;border:none;cursor:pointer;color:var(--muted);transition:.15s;font-family:inherit}
+.auth-tab.on{background:var(--s2);color:var(--accent);font-weight:500}
+.auth-err{font-size:12px;color:var(--danger);margin-bottom:10px;min-height:18px}
+
+/* App shell */
+#app-screen{display:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:1.75rem 1rem;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;flex-shrink:0;overflow-y:auto}
+.logo{font-size:20px;font-weight:800;color:var(--accent);margin-bottom:.2rem;letter-spacing:-1px}
+.logo em{color:var(--text);font-style:normal;font-weight:300}
+.user-info{font-size:11px;color:var(--muted);margin-bottom:1.25rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);cursor:pointer;color:var(--muted);font-size:13px;border:none;background:none;width:100%;text-align:left;transition:.15s;font-family:inherit}
+.nav:hover{background:var(--s2);color:var(--text)}.nav.on{background:var(--s2);color:var(--accent);font-weight:500}
+.nav-logout{margin-top:auto;color:var(--danger)!important}
+.nav-logout:hover{background:rgba(240,112,112,.08)!important}
+.main{flex:1;padding:2rem;overflow-y:auto}
+.pg{display:none}.pg.on{display:block}
+.pg-title{font-size:22px;font-weight:700;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
+
+/* sync */
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-weight:400}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite}
+.sync-dot.err{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.card-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:1rem}
+.mrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.mrow4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.mcard{background:var(--s2);border-radius:var(--r-sm);padding:1rem}
+.mval{font-size:24px;font-weight:700;color:var(--accent);line-height:1}
+.mval.blue{color:var(--blue)}.mval.purple{color:var(--purple)}.mval.warn{color:var(--warn)}
+.mlbl{font-size:11px;color:var(--muted);margin-top:5px}
+
+/* form */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:14px;outline:none;transition:.15s;font-family:inherit}
+input:focus,select:focus,textarea:focus{border-color:var(--border2)}
+select option{background:var(--s2)}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+
+/* buttons */
+.btn{padding:9px 16px;border-radius:var(--r-sm);font-size:13px;cursor:pointer;transition:.15s;border:1px solid var(--border2);background:transparent;color:var(--text);font-family:inherit}
+.btn:hover{background:var(--s2)}.btn:active{transform:scale(.98)}
+.btn-accent{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.btn-accent:hover{opacity:.88;background:var(--accent)}
+.btn-purple{background:rgba(184,164,248,.15);color:var(--purple);border-color:rgba(184,164,248,.3);font-weight:500}
+.btn-purple:hover{background:rgba(184,164,248,.22)}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn-del{color:var(--danger);border-color:rgba(240,112,112,.25);background:transparent}
+.btn-del:hover{background:rgba(240,112,112,.08)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.type-sel{display:flex;gap:8px;margin-bottom:1rem}
+.tybtn{flex:1;padding:10px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;font-family:inherit}
+.tybtn:hover{background:var(--s2);color:var(--text)}.tybtn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,240,110,.06)}
+.divider{height:1px;background:var(--border);margin:1rem 0}
+
+/* exercise blocks */
+.exblock{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:10px}
+.exhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.exname{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;color:var(--text);font-size:14px;font-weight:600;padding:4px 0;outline:none;font-family:inherit}
+.exname:focus{border-bottom-color:var(--accent)}
+.sets-hdr{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:5px}
+.setrow{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;align-items:center;margin-bottom:5px}
+.setnum{font-size:12px;color:var(--muted);text-align:center}
+.setin{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:7px 6px;font-size:13px;text-align:center;font-family:inherit;outline:none;width:100%}
+.setin:focus{border-color:var(--border2)}
+.vout{font-size:12px;color:var(--blue);text-align:center}
+.delbtn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0}
+.delbtn:hover{color:var(--danger)}
+.addset{width:100%;background:transparent;border:1px dashed var(--border2);border-radius:6px;color:var(--muted);padding:7px;cursor:pointer;font-size:12px;margin-top:4px;transition:.15s;font-family:inherit}
+.addset:hover{color:var(--text);background:var(--surface)}
+
+/* tags */
+.tag{display:inline-block;font-size:10px;padding:3px 8px;border-radius:20px;font-weight:500}
+.tag-s{background:rgba(200,240,110,.12);color:var(--accent);border:1px solid rgba(200,240,110,.25)}
+.tag-c{background:rgba(110,228,240,.12);color:var(--blue);border:1px solid rgba(110,228,240,.25)}
+.prbadge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
+.logitem{padding:12px 0;border-bottom:1px solid var(--border)}
+.logitem:last-child{border-bottom:none}
+.logitem-top{display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap}
+.logdate{font-size:12px;color:var(--muted)}
+.logsub{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* body log items */
+.bodyitem{padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.bodyitem:last-child{border-bottom:none}
+.bodyitem-date{font-size:12px;color:var(--muted)}
+.bodyitem-vals{display:flex;gap:16px;font-size:13px}
+.bodyval{text-align:center}
+.bodyval span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+
+/* AI chat */
+.ai-box{background:var(--s2);border-radius:var(--r);padding:1.25rem;min-height:120px;line-height:1.8;font-size:14px;color:var(--text);white-space:pre-wrap;word-break:break-word}
+.ai-box.loading{color:var(--muted);font-style:italic}
+.ai-box.empty{color:var(--muted)}
+.ai-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.ai-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.ai-chip:hover{border-color:var(--purple);color:var(--purple);background:rgba(184,164,248,.06)}
+.ai-input-row{display:flex;gap:8px;margin-top:1rem}
+.ai-input-row input{flex:1}
+.ai-msg{margin-bottom:12px;padding:12px;border-radius:var(--r-sm)}
+.ai-msg.user{background:rgba(200,240,110,.08);border:1px solid rgba(200,240,110,.15);color:var(--accent)}
+.ai-msg.assistant{background:var(--s2);border:1px solid var(--border);line-height:1.8}
+.ai-msg.assistant.typing{color:var(--muted);font-style:italic}
+
+/* calendar */
+.calhdr{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.calhdr-d{text-align:center;font-size:10px;color:var(--muted);padding:4px 0}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calday{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);background:var(--s2)}
+.calday.done{background:rgba(200,240,110,.18);color:var(--accent);font-weight:600}
+.calday.today{outline:1.5px solid var(--border2)}
+.calday.empty{background:transparent}
+.streak-big{font-size:52px;font-weight:800;color:var(--accent);line-height:1}
+.month-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.month-row:last-child{border-bottom:none}
+
+/* charts */
+.chart-wrap{position:relative;width:100%;height:200px;margin-top:8px}
+canvas{display:block}
+.sel-ex{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.exbtn{padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:.15s;font-family:inherit}
+.exbtn:hover{color:var(--text);background:var(--s2)}.exbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(200,240,110,.06)}
+
+/* bmi badge */
+.bmi-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-left:8px}
+.bmi-under{background:rgba(110,228,240,.12);color:var(--blue);border:1px solid rgba(110,228,240,.3)}
+.bmi-normal{background:rgba(200,240,110,.12);color:var(--accent);border:1px solid rgba(200,240,110,.3)}
+.bmi-over{background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
+.bmi-obese{background:rgba(240,112,112,.12);color:var(--danger);border:1px solid rgba(240,112,112,.3)}
+
+/* toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;padding:11px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;z-index:999;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.empty{text-align:center;padding:3rem;color:var(--muted);font-size:14px}
+
+/* mobile */
+@media(max-width:660px){
+  .sidebar{display:none}.main{padding:1rem;padding-bottom:75px}
+  .mrow{grid-template-columns:1fr 1fr}.mrow4{grid-template-columns:1fr 1fr}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .toast{bottom:5rem;right:1rem;left:1rem;text-align:center}
+}
+.mobnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 14px;z-index:100}
+@media(max-width:660px){.mobnav{display:flex}}
+.mobnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:5px 0;font-family:inherit}
+.mobnav-btn.on{color:var(--accent)}
+.mobnav-icon{font-size:18px;line-height:1}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">FIT<em>LOG</em></div>
+    <div class="auth-sub">健身紀錄，雲端同步</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login" onclick="authTab('login')">登入</button>
+      <button class="auth-tab" id="tab-signup" onclick="authTab('signup')">註冊</button>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="field"><label>電子郵件</label><input type="email" id="auth-email" placeholder="you@example.com"></div>
+    <div class="field"><label>密碼</label><input type="password" id="auth-pw" placeholder="至少 6 個字元" onkeydown="if(event.key==='Enter')doAuth()"></div>
+    <button class="btn btn-accent" onclick="doAuth()" style="width:100%;margin-top:4px" id="auth-btn">登入</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+<div class="shell">
+  <aside class="sidebar">
+    <div class="logo">FIT<em>LOG</em></div>
+    <div class="user-info" id="user-email"></div>
+    <button class="nav on" onclick="go('log')">＋ &nbsp;新增訓練</button>
+    <button class="nav" onclick="go('body')">⚖️ &nbsp;身體數據</button>
+    <button class="nav" onclick="go('ai')">🤖 &nbsp;AI 教練</button>
+    <button class="nav" onclick="go('history')">📋 &nbsp;歷史紀錄</button>
+    <button class="nav" onclick="go('progress')">📈 &nbsp;進步分析</button>
+    <button class="nav" onclick="go('habit')">📅 &nbsp;打卡習慣</button>
+    <button class="nav nav-logout" onclick="doLogout()">⎋ &nbsp;登出</button>
+  </aside>
+  <main class="main">
+
+    <!-- LOG -->
+    <div id="pg-log" class="pg on">
+      <div class="pg-title">新增訓練
+        <span class="sync-badge"><span class="sync-dot" id="sync-dot"></span><span id="sync-txt">已同步</span></span>
+      </div>
+      <div class="mrow">
+        <div class="mcard"><div class="mval" id="mv">0</div><div class="mlbl">訓練量 kg</div></div>
+        <div class="mcard"><div class="mval" id="ms">0</div><div class="mlbl">總組數</div></div>
+        <div class="mcard"><div class="mval" id="me">0</div><div class="mlbl">動作數</div></div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">訓練類型</div>
+        <div class="type-sel">
+          <button class="tybtn on" id="bt-s" onclick="setType('strength')">🏋️ 重訓 / 肌力</button>
+          <button class="tybtn" id="bt-c" onclick="setType('cardio')">🏃 有氧 / 跑步</button>
+        </div>
+        <div id="sf">
+          <div id="exlist"></div>
+          <button class="btn btn-sm" onclick="addEx()" style="margin-bottom:1rem">＋ 新增動作</button>
+        </div>
+        <div id="cf" style="display:none">
+          <div class="grid2">
+            <div class="field"><label>時間（分鐘）</label><input type="number" id="ct" placeholder="30" min="1" oninput="cpace()"></div>
+            <div class="field"><label>距離（km）</label><input type="number" id="cd" placeholder="5.0" step="0.1" min="0" oninput="cpace()"></div>
+          </div>
+          <div class="field"><label>配速（自動計算）</label><input id="cpacein" readonly placeholder="輸入時間與距離後自動換算"></div>
+        </div>
+        <div class="divider"></div>
+        <div class="field"><label>備註</label><input id="note" placeholder="今天的感受..."></div>
+        <button class="btn btn-accent" onclick="saveWorkout()" style="width:100%">儲存並同步雲端 ☁️</button>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div id="pg-body" class="pg">
+      <div class="pg-title">身體數據</div>
+      <div class="card">
+        <div class="card-lbl">新增紀錄</div>
+        <div class="grid3">
+          <div class="field"><label>身高（cm）</label><input type="number" id="b-height" placeholder="170" step="0.1" min="100" max="250"></div>
+          <div class="field"><label>體重（kg）</label><input type="number" id="b-weight" placeholder="65" step="0.1" min="20" max="300"></div>
+          <div class="field"><label>體脂肪（%）</label><input type="number" id="b-fat" placeholder="20" step="0.1" min="3" max="60"></div>
+        </div>
+        <div id="bmi-preview" style="margin-bottom:12px;font-size:13px;color:var(--muted)"></div>
+        <button class="btn btn-accent" onclick="saveBody()" style="width:100%">儲存身體數據 ☁️</button>
+      </div>
+      <div class="mrow4" id="body-metrics">
+        <div class="mcard"><div class="mval blue" id="bm-height">—</div><div class="mlbl">身高 cm</div></div>
+        <div class="mcard"><div class="mval" id="bm-weight">—</div><div class="mlbl">體重 kg</div></div>
+        <div class="mcard"><div class="mval purple" id="bm-fat">—</div><div class="mlbl">體脂肪 %</div></div>
+        <div class="mcard"><div class="mval warn" id="bm-bmi">—</div><div class="mlbl">BMI</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-lbl">體重趨勢</div>
+          <div class="chart-wrap"><canvas id="wChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">體脂肪趨勢</div>
+          <div class="chart-wrap"><canvas id="fChart"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">歷史紀錄</div>
+        <div id="body-history"><div style="color:var(--muted);font-size:13px">尚無紀錄</div></div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div id="pg-ai" class="pg">
+      <div class="pg-title">🤖 AI 教練</div>
+      <div class="card">
+        <div class="card-lbl">快速提問</div>
+        <div class="ai-chips">
+          <button class="ai-chip" onclick="aiAsk('根據我最近的訓練，幫我分析優缺點並給出建議')">📊 分析我的訓練</button>
+          <button class="ai-chip" onclick="aiAsk('根據我的身體數據（體重、體脂）幫我設定合理的健身目標')">🎯 設定目標</button>
+          <button class="ai-chip" onclick="aiAsk('根據我最近的訓練紀錄，幫我設計下週的訓練計畫')">📅 設計下週計畫</button>
+          <button class="ai-chip" onclick="aiAsk('我的臥推停滯了，給我突破瓶頸的建議')">💪 突破瓶頸</button>
+          <button class="ai-chip" onclick="aiAsk('根據我的訓練頻率和強度，幫我評估恢復狀況')">😴 評估恢復</button>
+          <button class="ai-chip" onclick="aiAsk('幫我分析哪些肌群訓練不足，需要加強')">🏋️ 肌群分析</button>
+        </div>
+        <div class="ai-input-row">
+          <input id="ai-q" placeholder="輸入你的問題，AI 教練會根據你的訓練資料回答..." onkeydown="if(event.key==='Enter')aiAsk()">
+          <button class="btn btn-purple" onclick="aiAsk()">發送 ↗</button>
+        </div>
+      </div>
+      <div id="ai-chat"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="pg-history" class="pg">
+      <div class="pg-title">歷史紀錄</div>
+      <div class="card"><div id="histlist"><div style="color:var(--muted);padding:1rem">載入中...</div></div></div>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="pg-progress" class="pg">
+      <div class="pg-title">進步分析</div>
+      <div class="card">
+        <div class="card-lbl">動作重量趨勢</div>
+        <div class="sel-ex" id="exbtnlist"></div>
+        <div id="pr-row" style="display:none;margin-bottom:10px">
+          <span style="font-size:12px;color:var(--muted)">個人最佳 PR：</span>
+          <span class="prbadge" id="prval">—</span>
+        </div>
+        <div class="chart-wrap"><canvas id="pChart"></canvas></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><div class="card-lbl">每週訓練量</div><div class="chart-wrap"><canvas id="vChart"></canvas></div></div>
+        <div class="card"><div class="card-lbl">訓練類型</div><div class="chart-wrap"><canvas id="tChart"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- HABIT -->
+    <div id="pg-habit" class="pg">
+      <div class="pg-title">打卡習慣</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-lbl">連續天數</div>
+          <div class="streak-big" id="stk">0</div>
+          <div style="margin-top:8px;font-size:13px;color:var(--muted)" id="stksub">快去訓練吧！</div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">本月統計</div>
+          <div class="month-row"><span style="color:var(--muted)">訓練天數</span><span style="font-size:20px;font-weight:700;color:var(--accent)" id="mdays">0</span></div>
+          <div class="month-row"><span style="color:var(--muted)">完成率</span><span style="font-size:20px;font-weight:700;color:var(--blue)" id="mrate">0%</span></div>
+          <div class="month-row"><span style="color:var(--muted)">總訓練量</span><span style="font-size:16px;font-weight:700" id="mvol">0 kg</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl" id="callbl">本月打卡</div>
+        <div class="calhdr" id="calhdr"></div>
+        <div class="calgrid" id="calgrid"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+<nav class="mobnav">
+  <button class="mobnav-btn on" id="mn-log" onclick="go('log')"><span class="mobnav-icon">＋</span>記錄</button>
+  <button class="mobnav-btn" id="mn-body" onclick="go('body')"><span class="mobnav-icon">⚖️</span>身體</button>
+  <button class="mobnav-btn" id="mn-ai" onclick="go('ai')"><span class="mobnav-icon">🤖</span>AI</button>
+  <button class="mobnav-btn" id="mn-history" onclick="go('history')"><span class="mobnav-icon">📋</span>歷史</button>
+  <button class="mobnav-btn" id="mn-progress" onclick="go('progress')"><span class="mobnav-icon">📈</span>分析</button>
+  <button class="mobnav-btn" id="mn-habit" onclick="go('habit')"><span class="mobnav-icon">📅</span>打卡</button>
+</nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDlRgLiq0Y2xF2Wc3ssqHtAO_HtbE4UMjk",
+  authDomain: "fitness-55b72.firebaseapp.com",
+  projectId: "fitness-55b72",
+  storageBucket: "fitness-55b72.firebasestorage.app",
+  messagingSenderId: "892087970274",
+  appId: "1:892087970274:web:622213fea000742b8431bb"
+};
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+window._auth = auth;
+window._db = db;
+window._fbFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, getDocs, query, orderBy, serverTimestamp };
+
+onAuthStateChanged(auth, user => {
+  if(user){
+    document.getElementById('auth-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    document.getElementById('user-email').textContent = user.email;
+    window._uid = user.uid;
+    loadAll();
+  } else {
+    document.getElementById('auth-screen').style.display='flex';
+    document.getElementById('app-screen').style.display='none';
+    window._uid = null;
+    window._WK = []; window._BD = [];
+  }
+});
+</script>
+
+<script>
+window._WK = [];
+window._BD = [];
+window._uid = null;
+var curType = 'strength';
+var exCount = 0;
+var selEx = null;
+var aiHistory = [];
+var PRESETS = ['臥推','深蹲','硬舉','引體向上','肩押','槓鈴划船','二頭彎舉','三頭下壓','腿推','弓步蹲','腹肌訓練'];
+
+// ── Auth ────────────────────────────────────────────────
+var authMode = 'login';
+function authTab(m){
+  authMode=m;
+  document.getElementById('tab-login').classList.toggle('on',m==='login');
+  document.getElementById('tab-signup').classList.toggle('on',m==='signup');
+  document.getElementById('auth-btn').textContent=m==='login'?'登入':'建立帳號';
+  document.getElementById('auth-err').textContent='';
+}
+function doAuth(){
+  var email=document.getElementById('auth-email').value.trim();
+  var pw=document.getElementById('auth-pw').value;
+  var errEl=document.getElementById('auth-err');
+  errEl.textContent='';
+  if(!email||!pw){errEl.textContent='請填寫帳號與密碼';return;}
+  var fn=authMode==='login'?window._fbFns.signInWithEmailAndPassword:window._fbFns.createUserWithEmailAndPassword;
+  fn(window._auth,email,pw).catch(function(e){
+    var msgs={'auth/user-not-found':'找不到此帳號','auth/wrong-password':'密碼錯誤','auth/email-already-in-use':'此信箱已被使用','auth/weak-password':'密碼至少需要 6 個字元','auth/invalid-email':'電子郵件格式錯誤','auth/invalid-credential':'帳號或密碼錯誤'};
+    errEl.textContent=msgs[e.code]||('錯誤：'+e.message);
+  });
+}
+function doLogout(){ window._fbFns.signOut(window._auth); }
+
+// ── Sync status ─────────────────────────────────────────
+function syncStatus(s){
+  var dot=document.getElementById('sync-dot');var txt=document.getElementById('sync-txt');
+  if(!dot) return;
+  dot.className='sync-dot'+(s==='syncing'?' syncing':s==='err'?' err':'');
+  txt.textContent=s==='syncing'?'同步中...':s==='err'?'同步失敗':'已同步 ☁️';
+}
+
+// ── Firebase load/push ──────────────────────────────────
+async function loadAll(){
+  if(!window._uid) return;
+  try{
+    var fns=window._fbFns,db=window._db,uid=window._uid;
+    var wSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'workouts'),fns.orderBy('createdAt','desc')));
+    window._WK=[];wSnap.forEach(function(d){window._WK.push(d.data());});
+    var bSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'body'),fns.orderBy('createdAt','desc')));
+    window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
+    syncStatus('ok');
+    updateBodyMetrics();
+  } catch(e){ syncStatus('err'); console.error(e); }
+}
+async function push(colName,data){
+  if(!window._uid) return;
+  syncStatus('syncing');
+  try{
+    var fns=window._fbFns,db=window._db;
+    data.createdAt=fns.serverTimestamp();
+    await fns.addDoc(fns.collection(db,'users',window._uid,colName),data);
+    syncStatus('ok');
+  } catch(e){ syncStatus('err'); toast('⚠️ 同步失敗',1); console.error(e); }
+}
+
+// ── Nav ─────────────────────────────────────────────────
+var PAGES=['log','body','ai','history','progress','habit'];
+function go(p){
+  document.querySelectorAll('.pg').forEach(function(e){e.classList.remove('on');});
+  document.querySelectorAll('.nav').forEach(function(e){e.classList.remove('on');});
+  document.querySelectorAll('.mobnav-btn').forEach(function(e){e.classList.remove('on');});
+  document.getElementById('pg-'+p).classList.add('on');
+  var navs=document.querySelectorAll('.nav');
+  PAGES.forEach(function(pg,i){if(pg===p&&navs[i])navs[i].classList.add('on');});
+  var mb=document.getElementById('mn-'+p);if(mb)mb.classList.add('on');
+  if(p==='history') renderHist();
+  if(p==='progress') renderProg();
+  if(p==='habit') renderHabit();
+  if(p==='body') renderBody();
+  if(p==='ai') renderAiChat();
+}
+
+// ── Type ────────────────────────────────────────────────
+function setType(t){
+  curType=t;
+  document.getElementById('bt-s').classList.toggle('on',t==='strength');
+  document.getElementById('bt-c').classList.toggle('on',t==='cardio');
+  document.getElementById('sf').style.display=t==='strength'?'':'none';
+  document.getElementById('cf').style.display=t==='cardio'?'':'none';
+}
+function cpace(){
+  var t=parseFloat(document.getElementById('ct').value)||0;
+  var d=parseFloat(document.getElementById('cd').value)||0;
+  if(t>0&&d>0){var pm=t/d,m=Math.floor(pm),s=Math.round((pm-m)*60);document.getElementById('cpacein').value=m+':'+(s<10?'0':'')+s+' /km';}
+  else document.getElementById('cpacein').value='';
+}
+
+// ── Exercise blocks ──────────────────────────────────────
+function addEx(name){
+  name=name||'';var id=exCount++;
+  var dl=PRESETS.map(function(n){return '<option value="'+n+'">';}).join('');
+  var div=document.createElement('div');div.className='exblock';div.id='ex-'+id;
+  div.innerHTML='<datalist id="dl'+id+'">'+dl+'</datalist>'+
+    '<div class="exhead"><input list="dl'+id+'" class="exname" id="en'+id+'" placeholder="動作名稱" value="'+name+'">'+
+    '<button class="btn btn-sm btn-del" onclick="document.getElementById(\'ex-'+id+'\').remove();upd()">✕</button></div>'+
+    '<div class="sets-hdr"><span></span><span>重量 kg</span><span>次數</span><span>訓練量</span><span></span></div>'+
+    '<div id="sr'+id+'"></div><button class="addset" onclick="addSet('+id+')">＋ 新增一組</button>';
+  document.getElementById('exlist').appendChild(div);
+  addSet(id);addSet(id);addSet(id);
+}
+function addSet(eid){
+  var c=document.getElementById('sr'+eid);var n=c.children.length+1;
+  var row=document.createElement('div');row.className='setrow';
+  row.innerHTML='<span class="setnum">'+n+'</span>'+
+    '<input type="number" class="setin win" placeholder="60" min="0" step="2.5" oninput="cv(this)">'+
+    '<input type="number" class="setin rin" placeholder="10" min="0" oninput="cv(this)">'+
+    '<span class="vout">—</span>'+
+    '<button class="delbtn" onclick="this.parentElement.remove();upd()">×</button>';
+  c.appendChild(row);
+}
+function cv(el){
+  var row=el.parentElement;
+  var w=parseFloat(row.querySelector('.win').value)||0;var r=parseFloat(row.querySelector('.rin').value)||0;
+  row.querySelector('.vout').textContent=(w&&r)?(w*r)+'kg':'—';upd();
+}
+function upd(){
+  var vol=0,sets=0,ex=0;
+  document.querySelectorAll('.exblock').forEach(function(b){
+    var id=b.id.split('-')[1];var has=false;
+    document.querySelectorAll('#sr'+id+' .setrow').forEach(function(row){
+      var w=parseFloat(row.querySelector('.win').value)||0;var r=parseFloat(row.querySelector('.rin').value)||0;
+      if(w&&r){vol+=w*r;sets++;has=true;}
+    });
+    if(has) ex++;
+  });
+  document.getElementById('mv').textContent=vol;
+  document.getElementById('ms').textContent=sets;
+  document.getElementById('me').textContent=ex;
+}
+
+// ── Save workout ─────────────────────────────────────────
+async function saveWorkout(){
+  var today=new Date().toISOString().slice(0,10);
+  var note=document.getElementById('note').value.trim();
+  var w={date:today,type:curType,note:note,exercises:[],cardio:null};
+  if(curType==='strength'){
+    document.querySelectorAll('.exblock').forEach(function(b){
+      var id=b.id.split('-')[1];var nm=(document.getElementById('en'+id)||{value:''}).value.trim();
+      if(!nm) return;var sets=[];
+      document.querySelectorAll('#sr'+id+' .setrow').forEach(function(row){
+        var wt=parseFloat(row.querySelector('.win').value)||0;var rp=parseFloat(row.querySelector('.rin').value)||0;
+        if(wt&&rp) sets.push({weight:wt,reps:rp});
+      });
+      if(sets.length) w.exercises.push({name:nm,sets:sets});
+    });
+    if(!w.exercises.length){toast('請至少記錄一個動作！',1);return;}
+  } else {
+    var t=parseFloat(document.getElementById('ct').value)||0;var d=parseFloat(document.getElementById('cd').value)||0;
+    if(!t){toast('請輸入訓練時間！',1);return;}
+    w.cardio={time:t,distance:d,pace:document.getElementById('cpacein').value};
+  }
+  window._WK.unshift(w);await push('workouts',w);
+  document.getElementById('exlist').innerHTML='';
+  document.getElementById('note').value='';document.getElementById('ct').value='';document.getElementById('cd').value='';document.getElementById('cpacein').value='';
+  exCount=0;selEx=null;
+  document.getElementById('mv').textContent='0';document.getElementById('ms').textContent='0';document.getElementById('me').textContent='0';
+  toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);addEx('臥推');
+}
+
+// ── Body data ────────────────────────────────────────────
+document.addEventListener('input', function(e){
+  if(['b-height','b-weight','b-fat'].includes(e.target.id)) previewBMI();
+});
+function previewBMI(){
+  var h=parseFloat(document.getElementById('b-height').value);
+  var w=parseFloat(document.getElementById('b-weight').value);
+  var prev=document.getElementById('bmi-preview');
+  if(h&&w){var bmi=w/((h/100)*(h/100));prev.innerHTML='BMI：<strong>'+bmi.toFixed(1)+'</strong> <span class="bmi-badge '+bmiClass(bmi)+'">'+bmiLabel(bmi)+'</span>';}
+  else prev.innerHTML='';
+}
+function bmiClass(b){ return b<18.5?'bmi-under':b<24?'bmi-normal':b<28?'bmi-over':'bmi-obese'; }
+function bmiLabel(b){ return b<18.5?'體重過輕':b<24?'正常':b<28?'過重':'肥胖'; }
+
+async function saveBody(){
+  var h=parseFloat(document.getElementById('b-height').value);
+  var w=parseFloat(document.getElementById('b-weight').value);
+  var f=parseFloat(document.getElementById('b-fat').value);
+  if(!h||!w){toast('請至少輸入身高與體重！',1);return;}
+  var rec={date:new Date().toISOString().slice(0,10),height:h,weight:w,fat:f||null};
+  if(h&&w) rec.bmi=parseFloat((w/((h/100)*(h/100))).toFixed(1));
+  window._BD.unshift(rec);await push('body',rec);
+  document.getElementById('b-height').value='';document.getElementById('b-weight').value='';document.getElementById('b-fat').value='';
+  document.getElementById('bmi-preview').innerHTML='';
+  toast('✓ 身體數據已儲存！');renderBody();updateBodyMetrics();
+}
+
+function updateBodyMetrics(){
+  if(!window._BD.length) return;
+  var latest=window._BD[0];
+  document.getElementById('bm-height').textContent=latest.height||'—';
+  document.getElementById('bm-weight').textContent=latest.weight||'—';
+  document.getElementById('bm-fat').textContent=latest.fat!=null?latest.fat+'%':'—';
+  document.getElementById('bm-bmi').textContent=latest.bmi||'—';
+}
+
+function renderBody(){
+  updateBodyMetrics();
+  // weight chart
+  var pts=window._BD.filter(function(b){return b.weight;}).slice(0,12).reverse();
+  if(pts.length) drawLine('wChart',pts.map(function(b){return b.date.slice(5);}),pts.map(function(b){return b.weight;}),'#6ee4f0');
+  else{var cv=clearCanvas('wChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
+  // fat chart
+  var fpts=window._BD.filter(function(b){return b.fat!=null;}).slice(0,12).reverse();
+  if(fpts.length) drawLine('fChart',fpts.map(function(b){return b.date.slice(5);}),fpts.map(function(b){return b.fat;}),'#b8a4f8');
+  else{var cv=clearCanvas('fChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
+  // history list
+  var el=document.getElementById('body-history');
+  if(!window._BD.length){el.innerHTML='<div style="color:var(--muted);font-size:13px">尚無紀錄</div>';return;}
+  el.innerHTML=window._BD.slice(0,10).map(function(b){
+    return '<div class="bodyitem">'+
+      '<span class="bodyitem-date">'+b.date+'</span>'+
+      '<div class="bodyitem-vals">'+
+        (b.height?'<div class="bodyval">'+b.height+'<span>身高</span></div>':'')+
+        '<div class="bodyval">'+b.weight+'<span>體重</span></div>'+
+        (b.fat!=null?'<div class="bodyval">'+b.fat+'%<span>體脂</span></div>':'')+
+        (b.bmi?'<div class="bodyval">'+b.bmi+'<span>BMI</span></div>':'')+
+      '</div></div>';
+  }).join('');
+}
+
+// ── AI Coach ─────────────────────────────────────────────
+function buildContext(){
+  var latest=window._BD[0]||{};
+  var recentWk=window._WK.slice(0,10);
+  var exNames=[...new Set(window._WK.flatMap(function(w){return (w.exercises||[]).map(function(e){return e.name;});}))];
+  var prMap={};
+  exNames.forEach(function(n){prMap[n]=pr(n);});
+  return '【用戶健身資料】\n'+
+    '身體數據（最新）：身高 '+(latest.height||'未記錄')+'cm，體重 '+(latest.weight||'未記錄')+'kg，體脂 '+(latest.fat!=null?latest.fat+'%':'未記錄')+'，BMI '+(latest.bmi||'未記錄')+'\n'+
+    '最近10次訓練：\n'+recentWk.map(function(w,i){
+      if(w.type==='cardio'&&w.cardio) return (i+1)+'. '+w.date+' 有氧：'+w.cardio.time+'分鐘'+(w.cardio.distance?' '+w.cardio.distance+'km':'');
+      var vol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
+      var exStr=(w.exercises||[]).map(function(e){return e.name+'('+e.sets.length+'組)';}).join('、');
+      return (i+1)+'. '+w.date+' 重訓：'+exStr+'，總量'+vol+'kg';
+    }).join('\n')+
+    '\n各動作 PR：'+Object.entries(prMap).map(function(kv){return kv[0]+' '+kv[1]+'kg';}).join('、')+
+    '\n\n請用繁體中文回答，給出專業、具體、有依據的建議。';
+}
+
+function renderAiChat(){
+  var chat=document.getElementById('ai-chat');
+  if(!aiHistory.length){chat.innerHTML='';return;}
+  chat.innerHTML=aiHistory.map(function(m){
+    return '<div class="ai-msg '+m.role+(m.typing?' typing':'')+'">'+m.content+'</div>';
+  }).join('');
+  chat.scrollTop=chat.scrollHeight;
+}
+
+async function aiAsk(question){
+  var q=question||document.getElementById('ai-q').value.trim();
+  if(!q) return;
+  document.getElementById('ai-q').value='';
+  aiHistory.push({role:'user',content:q});
+  aiHistory.push({role:'assistant',content:'思考中...✦',typing:true});
+  renderAiChat();
+
+  var ctx=buildContext();
+  var messages=[{role:'user',content:ctx+'\n\n用戶問題：'+q}];
+
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持你的建議。',
+        messages:messages
+      })
+    });
+    var data=await res.json();
+    var reply=data.content&&data.content[0]?data.content[0].text:'抱歉，無法取得回應。';
+    aiHistory[aiHistory.length-1]={role:'assistant',content:reply,typing:false};
+  } catch(e){
+    aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 連線失敗，請確認網路連線後重試。',typing:false};
+  }
+  renderAiChat();
+}
+
+// ── Toast ───────────────────────────────────────────────
+function toast(msg,err){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'var(--danger)':'var(--accent)';t.style.color=err?'#fff':'#000';
+  t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+// ── History ──────────────────────────────────────────────
+function pr(name){
+  var mx=0;
+  window._WK.forEach(function(w){(w.exercises||[]).forEach(function(e){
+    if(e.name===name) e.sets.forEach(function(s){if(s.weight>mx)mx=s.weight;});
+  });});
+  return mx;
+}
+function renderHist(){
+  var el=document.getElementById('histlist');
+  if(!window._WK.length){el.innerHTML='<div class="empty">還沒有訓練紀錄</div>';return;}
+  el.innerHTML=window._WK.map(function(w){
+    var sub='';
+    if(w.type==='cardio'&&w.cardio){
+      sub=w.cardio.distance?w.cardio.time+'分鐘 · '+w.cardio.distance+'km · '+w.cardio.pace:w.cardio.time+'分鐘';
+    } else {
+      var vol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
+      sub=(w.exercises||[]).length+'個動作 · '+vol+'kg · '+(w.exercises||[]).map(function(e){return e.name;}).join('、');
+    }
+    var prex=(w.exercises||[]).filter(function(e){return e.sets.some(function(s){return s.weight>0&&s.weight>=pr(e.name);});});
+    return '<div class="logitem"><div class="logitem-top"><span class="tag '+(w.type==='cardio'?'tag-c':'tag-s')+'">'+(w.type==='cardio'?'有氧':'重訓')+'</span>'+
+      '<span class="logdate">'+w.date+'</span>'+(prex.length?'<span class="prbadge">🏆 PR</span>':'')+
+      '</div><div class="logsub">'+sub+(w.note?' · '+w.note:'')+'</div>'+
+      (prex.length?'<div style="font-size:11px;color:var(--warn);margin-top:4px">創新高：'+prex.map(function(e){return e.name;}).join('、')+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+// ── Charts ───────────────────────────────────────────────
+function clearCanvas(id){
+  var c=document.getElementById(id);var r=c.parentElement.getBoundingClientRect();
+  var dpr=window.devicePixelRatio||1;
+  c.width=r.width*dpr;c.height=r.height*dpr;c.style.width=r.width+'px';c.style.height=r.height+'px';
+  var ctx=c.getContext('2d');ctx.scale(dpr,dpr);return{ctx:ctx,w:r.width,h:r.height};
+}
+function drawLine(id,labels,data,color){
+  if(!labels.length) return;
+  var cv=clearCanvas(id),ctx=cv.ctx,W=cv.w,H=cv.h;
+  var pad={t:16,r:16,b:36,l:52};var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var mn=Math.min.apply(null,data),mx=Math.max.apply(null,data);
+  if(mn===mx){mn-=5;mx+=5;}var range=mx-mn||1;
+  function xp(i){return pad.l+i*(cw/(labels.length-1||1));}
+  function yp(v){return pad.t+ch-(v-mn)/range*ch;}
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=pad.t+ch/4*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px system-ui';ctx.textAlign='right';ctx.fillText(+(mn+range*(1-i/4)).toFixed(1),pad.l-6,y+4);}
+  ctx.beginPath();ctx.moveTo(xp(0),yp(data[0]));for(var i=1;i<data.length;i++) ctx.lineTo(xp(i),yp(data[i]));
+  ctx.lineTo(xp(data.length-1),H-pad.b);ctx.lineTo(xp(0),H-pad.b);ctx.closePath();
+  ctx.fillStyle=color.replace(')',',0.08)').replace('rgb','rgba');ctx.fill();
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.moveTo(xp(0),yp(data[0]));for(var i=1;i<data.length;i++) ctx.lineTo(xp(i),yp(data[i]));ctx.stroke();
+  for(var i=0;i<data.length;i++){ctx.beginPath();ctx.arc(xp(i),yp(data[i]),4,0,Math.PI*2);
+    ctx.fillStyle=color;ctx.fill();ctx.strokeStyle='#0f0f0f';ctx.lineWidth=2;ctx.stroke();}
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px system-ui';ctx.textAlign='center';
+  var step=Math.ceil(labels.length/6);for(var i=0;i<labels.length;i+=step) ctx.fillText(labels[i],xp(i),H-pad.b+16);
+}
+function drawBar(id,labels,data,color){
+  if(!labels.length) return;
+  var cv=clearCanvas(id),ctx=cv.ctx,W=cv.w,H=cv.h;
+  var pad={t:16,r:16,b:36,l:52};var cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  var mx=Math.max.apply(null,data)||1;var gap=cw/labels.length;var bw=gap*0.6;
+  ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;
+  for(var i=0;i<=4;i++){var y=pad.t+ch/4*i;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px system-ui';ctx.textAlign='right';ctx.fillText(Math.round(mx*(1-i/4)),pad.l-6,y+4);}
+  for(var i=0;i<data.length;i++){var x=pad.l+gap*i+(gap-bw)/2;var bh=data[i]/mx*ch;
+    ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,pad.t+ch-bh,bw,bh,3);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillText(labels[i],x+bw/2,H-pad.b+16);}
+}
+function drawDonut(id,data,labels,colors){
+  var cv=clearCanvas(id),ctx=cv.ctx,W=cv.w,H=cv.h;
+  var total=data.reduce(function(a,b){return a+b;},0)||1;
+  var cx=W/2,cy=(H-40)/2+16,r=Math.min(cx,cy)-20,start=-Math.PI/2;
+  data.forEach(function(v,i){var sl=v/total*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+sl);ctx.closePath();ctx.fillStyle=colors[i];ctx.fill();start+=sl;});
+  ctx.beginPath();ctx.arc(cx,cy,r*0.55,0,Math.PI*2);ctx.fillStyle='#191919';ctx.fill();
+  var ly=H-28,lx=W/2-(labels.length*90)/2;
+  labels.forEach(function(lb,i){ctx.fillStyle=colors[i];ctx.fillRect(lx+i*90,ly,10,10);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='11px system-ui';ctx.textAlign='left';ctx.fillText(lb+' ('+data[i]+')',lx+i*90+14,ly+9);});
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText('共 '+total+' 次',cx,cy-6);
+  ctx.fillStyle='#c8f06e';ctx.font='bold 16px system-ui';ctx.fillText(Math.round(data[0]/total*100)+'% 重訓',cx,cy+14);
+}
+
+// ── Progress ─────────────────────────────────────────────
+function renderProg(){
+  var names=[...new Set(window._WK.flatMap(function(w){return (w.exercises||[]).map(function(e){return e.name;});}))];
+  var c=document.getElementById('exbtnlist');c.innerHTML='';
+  if(!names.length){c.innerHTML='<span style="color:var(--muted);font-size:13px">還沒有重訓紀錄</span>';}
+  names.forEach(function(n){var btn=document.createElement('button');btn.className='exbtn'+(n===selEx?' on':'');btn.textContent=n;btn.onclick=function(){selEx=n;renderProg();};c.appendChild(btn);});
+  if(selEx&&names.includes(selEx)){
+    var prv=pr(selEx);document.getElementById('pr-row').style.display='';document.getElementById('prval').textContent=prv+'kg';
+    var pts=window._WK.filter(function(w){return (w.exercises||[]).some(function(e){return e.name===selEx;});})
+      .map(function(w){var ex=w.exercises.find(function(e){return e.name===selEx;});return{date:w.date.slice(5),val:Math.max.apply(null,ex.sets.map(function(s){return s.weight;}))};}).reverse();
+    drawLine('pChart',pts.map(function(p){return p.date;}),pts.map(function(p){return p.val;}),'#c8f06e');
+  } else {
+    document.getElementById('pr-row').style.display='none';
+    var cv=clearCanvas('pChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('請選擇上方動作',cv.w/2,cv.h/2);
+  }
+  var weeks={};
+  window._WK.forEach(function(w){var d=new Date(w.date);d.setDate(d.getDate()-d.getDay());var k=d.toISOString().slice(5,10);
+    var vol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);weeks[k]=(weeks[k]||0)+vol;});
+  var wkeys=Object.keys(weeks).sort().slice(-8);
+  if(wkeys.length) drawBar('vChart',wkeys,wkeys.map(function(k){return weeks[k];}),'rgba(110,228,240,0.6)');
+  else{var cv=clearCanvas('vChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
+  var sc=window._WK.filter(function(w){return w.type==='strength';}).length;
+  var cc=window._WK.filter(function(w){return w.type==='cardio';}).length;
+  if(sc||cc) drawDonut('tChart',[sc,cc],['重訓','有氧'],['rgba(200,240,110,0.75)','rgba(110,228,240,0.75)']);
+  else{var cv=clearCanvas('tChart');cv.ctx.fillStyle='rgba(255,255,255,0.2)';cv.ctx.font='13px system-ui';cv.ctx.textAlign='center';cv.ctx.fillText('暫無資料',cv.w/2,cv.h/2);}
+}
+
+// ── Habit ────────────────────────────────────────────────
+function renderHabit(){
+  var trained=new Set(window._WK.map(function(w){return w.date;}));
+  var now=new Date(),y=now.getFullYear(),mo=now.getMonth();
+  var todayStr=now.toISOString().slice(0,10);
+  var dim=new Date(y,mo+1,0).getDate(),fd=new Date(y,mo,1).getDay();
+  var s=0,tmp=new Date(now);
+  while(true){var ds=tmp.toISOString().slice(0,10);if(trained.has(ds)){s++;tmp.setDate(tmp.getDate()-1);}else break;}
+  document.getElementById('stk').textContent=s;
+  document.getElementById('stksub').textContent=s>=14?'🔥🔥 超猛！':s>=7?'🔥 燃燒吧！':s>=3?'💪 繼續加油！':s>0?'✨ 開始了！':'今天就去訓練吧！';
+  var mos=y+'-'+(mo+1<10?'0':'')+(mo+1);
+  var mwk=window._WK.filter(function(w){return w.date.startsWith(mos);});
+  var mvol=mwk.reduce(function(a,w){return a+(w.exercises||[]).reduce(function(b,e){return b+e.sets.reduce(function(c,s){return c+s.weight*s.reps;},0);},0);},0);
+  document.getElementById('mdays').textContent=mwk.length;
+  document.getElementById('mrate').textContent=Math.round(mwk.length/dim*100)+'%';
+  document.getElementById('mvol').textContent=mvol+' kg';
+  document.getElementById('callbl').textContent=y+'年'+(mo+1)+'月';
+  document.getElementById('calhdr').innerHTML=['日','一','二','三','四','五','六'].map(function(d){return '<div class="calhdr-d">'+d+'</div>';}).join('');
+  var html='';
+  for(var i=0;i<fd;i++) html+='<div class="calday empty"></div>';
+  for(var d=1;d<=dim;d++){var ds=mos+'-'+(d<10?'0':'')+d;html+='<div class="calday'+(trained.has(ds)?' done':'')+(ds===todayStr?' today':'')+'">'+(d<10?'0':'')+d+'</div>';}
+  document.getElementById('calgrid').innerHTML=html;
+}
+
+// ── Init ─────────────────────────────────────────────────
+addEx('臥推');
+</script>
+</body>
+</html>
