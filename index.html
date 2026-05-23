@@ -223,11 +223,18 @@ canvas{display:block}
   .toast{bottom:5rem;right:1rem;left:1rem;text-align:center}
   .rest-timer{bottom:5rem;right:.75rem}
 }
-.mobnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 14px;z-index:100}
+.mobnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,14px);z-index:100}
 @media(max-width:660px){.mobnav{display:flex}}
-.mobnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:5px 0;font-family:inherit}
+.mobnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:5px 0;font-family:inherit;transition:.15s}
 .mobnav-btn.on{color:var(--accent)}
-.mobnav-icon{font-size:18px;line-height:1}
+.mobnav-icon{font-size:22px;line-height:1}
+/* More drawer */
+.more-drawer{display:none;position:fixed;bottom:65px;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:99;padding:.5rem}
+.more-drawer.open{display:block}
+.more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:.5rem}
+.more-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:var(--r-sm);background:var(--s2);border:none;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+.more-item:active{opacity:.7}
+.more-icon{font-size:24px;line-height:1}
 </style>
 </head>
 <body>
@@ -392,6 +399,10 @@ canvas{display:block}
       <div class="pg-title">🤖 AI 教練</div>
       <div class="card">
         <div class="card-lbl">快速提問</div>
+        <div id="ai-no-key-banner" style="display:none;background:rgba(240,196,110,.08);border:1px solid rgba(240,196,110,.25);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;font-size:14px;color:var(--warn);display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>⚠️ 尚未設定 Gemini API Key</span>
+          <button class="btn btn-sm" onclick="go('settings')" style="color:var(--warn);border-color:rgba(240,196,110,.4);white-space:nowrap">去設定 →</button>
+        </div>
         <div class="ai-chips">
           <button class="ai-chip" onclick="aiAsk('根據我最近的訓練，幫我分析優缺點並給出建議')">📊 分析我的訓練</button>
           <button class="ai-chip" onclick="aiAsk('根據我的身體數據幫我設定合理的健身目標')">🎯 設定目標</button>
@@ -496,14 +507,24 @@ canvas{display:block}
 
   </main>
 </div>
+<!-- More Drawer -->
+<div class="more-drawer" id="more-drawer">
+  <div class="more-grid">
+    <button class="more-item" onclick="go('body');closeMore()"><span class="more-icon">⚖️</span>身體數據</button>
+    <button class="more-item" onclick="go('history');closeMore()"><span class="more-icon">🕐</span>歷史紀錄</button>
+    <button class="more-item" onclick="go('progress');closeMore()"><span class="more-icon">📈</span>進步分析</button>
+    <button class="more-item" onclick="go('habit');closeMore()"><span class="more-icon">📅</span>打卡習慣</button>
+    <button class="more-item" onclick="go('templates');closeMore()"><span class="more-icon">📋</span>訓練範本</button>
+    <button class="more-item" onclick="go('settings');closeMore()"><span class="more-icon">⚙️</span>設定</button>
+    <button class="more-item" onclick="doLogout()"><span class="more-icon">⎋</span>登出</button>
+  </div>
+</div>
 <nav class="mobnav">
-  <button class="mobnav-btn on" id="mn-log" onclick="go('log')"><span class="mobnav-icon">＋</span>記錄</button>
-  <button class="mobnav-btn" id="mn-body" onclick="go('body')"><span class="mobnav-icon">⚖️</span>身體</button>
-  <button class="mobnav-btn" id="mn-diet" onclick="go('diet')"><span class="mobnav-icon">🥗</span>飲食</button>
-  <button class="mobnav-btn" id="mn-ai" onclick="go('ai')"><span class="mobnav-icon">🤖</span>AI</button>
-  <button class="mobnav-btn" id="mn-history" onclick="go('history')"><span class="mobnav-icon">🕐</span>歷史</button>
-  <button class="mobnav-btn" id="mn-progress" onclick="go('progress')"><span class="mobnav-icon">📈</span>分析</button>
-  <button class="mobnav-btn" id="mn-habit" onclick="go('habit')"><span class="mobnav-icon">📅</span>打卡</button>
+  <button class="mobnav-btn on" id="mn-log" onclick="go('log');closeMore()"><span class="mobnav-icon">＋</span>記錄</button>
+  <button class="mobnav-btn" id="mn-diet" onclick="go('diet');closeMore()"><span class="mobnav-icon">🥗</span>飲食</button>
+  <button class="mobnav-btn" id="mn-ai" onclick="go('ai');closeMore()"><span class="mobnav-icon">🤖</span>AI</button>
+  <button class="mobnav-btn" id="mn-templates" onclick="go('templates');closeMore()"><span class="mobnav-icon">📋</span>範本</button>
+  <button class="mobnav-btn" id="mn-more" onclick="toggleMore()"><span class="mobnav-icon">☰</span>更多</button>
 </nav>
 </div>
 
@@ -535,7 +556,7 @@ canvas{display:block}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, setDoc, getDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -550,7 +571,7 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 window._auth = auth; window._db = db;
-window._fbFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, getDocs, query, orderBy, serverTimestamp };
+window._fbFns = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, setDoc, getDoc };
 
 onAuthStateChanged(auth, user => {
   if(user){
@@ -570,6 +591,7 @@ onAuthStateChanged(auth, user => {
 <script>
 window._WK = []; window._BD = []; window._DT = [];
 window._uid = null;
+window._geminiKey = null;
 var curType = 'strength';
 var exCount = 0;
 var selEx = null;
@@ -640,7 +662,16 @@ async function loadAll(){
     window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
     var dSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'diet'),fns.orderBy('createdAt','desc')));
     window._DT=[];dSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._DT.push(rec);});
-    syncStatus('ok'); updateBodyMetrics(); renderDiet();
+    // Load user settings from Firebase
+    var settingsRef=fns.doc(db,'users',uid,'settings','prefs');
+    var settingsSnap=await fns.getDoc(settingsRef);
+    if(settingsSnap.exists()){
+      var prefs=settingsSnap.data();
+      if(prefs.gemini_api_key) window._geminiKey=prefs.gemini_api_key;
+      if(prefs.cal_goal) localStorage.setItem('cal_goal',prefs.cal_goal);
+      if(prefs.theme){ localStorage.setItem('theme',prefs.theme); setTheme(prefs.theme); }
+    }
+    syncStatus('ok'); updateBodyMetrics(); renderDiet(); renderAiChat();
   } catch(e){ syncStatus('err'); console.error(e); }
 }
 async function push(colName,data){
@@ -665,6 +696,9 @@ function go(p){
   var navs=document.querySelectorAll('.nav');
   PAGES.forEach(function(pg,i){if(pg===p&&navs[i])navs[i].classList.add('on');});
   var mb=document.getElementById('mn-'+p);if(mb)mb.classList.add('on');
+  // For pages in the 'more' drawer, highlight the more button
+  var morePages=['body','history','progress','habit','settings'];
+  if(morePages.includes(p)){document.getElementById('mn-more').classList.add('on');}
   if(p==='history') renderHist();
   if(p==='progress') renderProg();
   if(p==='habit') renderHabit();
@@ -985,7 +1019,7 @@ async function dietAdd(){
   var food=document.getElementById('diet-input').value.trim();
   var meal=document.getElementById('diet-meal').value;
   if(!food){toast('請輸入食物名稱',1);return;}
-  var key=localStorage.getItem('gemini_api_key');
+  var key=window._geminiKey;
   if(!key){toast('請先設定 Gemini API Key',1);return;}
   document.getElementById('diet-analyzing').style.display='block';
   document.getElementById('diet-input').value='';
@@ -1129,6 +1163,8 @@ function fmt(t){
 }
 
 function renderAiChat(){
+  var banner=document.getElementById('ai-no-key-banner');
+  if(banner) banner.style.display=window._geminiKey?'none':'flex';
   var chat=document.getElementById('ai-chat');
   if(!aiHistory.length){chat.innerHTML='';return;}
   chat.innerHTML=aiHistory.map(function(m){
@@ -1153,7 +1189,7 @@ async function aiAsk(question){
   renderAiChat();
   var ctx=buildContext();
   try{
-    var key=localStorage.getItem('gemini_api_key');
+    var key=window._geminiKey;
     if(!key){aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 請先至「設定」頁面輸入 Gemini API Key。',typing:false};renderAiChat();return;}
     var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
@@ -1198,35 +1234,56 @@ async function genWeeklyReport(){
 }
 
 // ── Settings ─────────────────────────────────────────────
-function saveApiKey(){
+async function saveApiKey(){
   var k=document.getElementById('gemini-key-input').value.trim();
   if(!k){toast('請輸入 API Key！',1);return;}
-  localStorage.setItem('gemini_api_key',k);
-  document.getElementById('key-status').textContent='✓ 已儲存';
+  window._geminiKey=k;
+  document.getElementById('key-status').textContent='儲存中...';
   document.getElementById('gemini-key-input').value='';
-  toast('✓ API Key 已儲存！');
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{gemini_api_key:k},{merge:true});
+    document.getElementById('key-status').textContent='✓ 已儲存並同步';
+    renderAiChat();
+    toast('✓ API Key 已儲存，所有裝置皆可使用！');
+  } catch(e){ toast('儲存失敗',1);console.error(e); }
 }
-function clearApiKey(){
-  localStorage.removeItem('gemini_api_key');
+async function clearApiKey(){
+  window._geminiKey=null;
   document.getElementById('gemini-key-input').value='';
   document.getElementById('key-status').textContent='已清除';
-  toast('API Key 已清除');
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{gemini_api_key:null},{merge:true});
+    renderAiChat();
+    toast('API Key 已清除');
+  } catch(e){ toast('清除失敗',1); }
 }
-function saveCalGoal(){
+async function saveCalGoal(){
   var v=parseInt(document.getElementById('cal-goal-input').value);
   if(!v||v<500){toast('請輸入有效熱量目標',1);return;}
   localStorage.setItem('cal_goal',v);
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{cal_goal:v},{merge:true});
+  } catch(e){ console.error(e); }
   toast('✓ 熱量目標已設定：'+v+' kcal');
   renderDiet();
 }
-function setTheme(t){
+async function setTheme(t){
   document.body.classList.toggle('light',t==='light');
   localStorage.setItem('theme',t);
   document.getElementById('btn-dark').classList.toggle('btn-accent',t==='dark');
   document.getElementById('btn-light').classList.toggle('btn-accent',t==='light');
+  if(window._uid){
+    try{
+      var fns=window._fbFns,db=window._db;
+      await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{theme:t},{merge:true});
+    } catch(e){ console.error(e); }
+  }
 }
 function renderSettings(){
-  var k=localStorage.getItem('gemini_api_key');
+  var k=window._geminiKey;
   document.getElementById('key-status').textContent=k?'✓ 已設定 Key':'尚未設定';
   document.getElementById('gemini-key-input').value='';
   var goal=localStorage.getItem('cal_goal')||'2000';
@@ -1237,6 +1294,25 @@ function renderSettings(){
 }
 
 // ── Toast ────────────────────────────────────────────────
+function toggleMore(){
+  var d=document.getElementById('more-drawer');
+  var btn=document.getElementById('mn-more');
+  var isOpen=d.classList.toggle('open');
+  btn.style.color=isOpen?'var(--accent)':'';
+}
+function closeMore(){
+  document.getElementById('more-drawer').classList.remove('open');
+  document.getElementById('mn-more').style.color='';
+}
+// Close drawer on outside tap
+document.addEventListener('click',function(e){
+  var drawer=document.getElementById('more-drawer');
+  var btn=document.getElementById('mn-more');
+  if(drawer&&drawer.classList.contains('open')&&!drawer.contains(e.target)&&!btn.contains(e.target)){
+    closeMore();
+  }
+});
+
 function toast(msg,err){
   var t=document.getElementById('toast');
   t.textContent=msg;t.style.background=err?'var(--danger)':'var(--accent)';t.style.color=err?'#fff':'#000';
