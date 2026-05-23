@@ -373,23 +373,46 @@ canvas{display:block}
             </select>
           </div>
           <button class="btn btn-accent" onclick="dietAdd()" style="margin-bottom:0;white-space:nowrap">AI 分析 ✨</button>
+          <button class="btn btn-blue" onclick="document.getElementById('diet-photo-input').click()" style="margin-bottom:0;white-space:nowrap">📷 拍照</button>
+          <input type="file" id="diet-photo-input" accept="image/*" capture="environment" style="display:none" onchange="dietPhotoAdd(this)">
         </div>
-        <div id="diet-analyzing" style="display:none" class="diet-analyzing">Gemini 分析中...</div>
+        <div id="diet-analyzing" style="display:none" class="diet-analyzing">📷 Gemini 圖片辨識中...</div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
-          <div class="card-lbl" style="margin-bottom:0">今日熱量</div>
-          <div style="font-size:13px;color:var(--muted)">目標：<span id="cal-goal-val">2000</span> kcal</div>
+          <div class="card-lbl" style="margin-bottom:0">今日總覽</div>
+          <div style="font-size:13px;color:var(--muted)">熱量目標：<span id="cal-goal-val">2000</span> kcal</div>
         </div>
-        <div style="display:flex;gap:16px;margin-bottom:10px">
-          <div><span style="font-size:28px;font-weight:800;color:var(--accent)" id="cal-today">0</span><span style="font-size:13px;color:var(--muted)"> kcal</span></div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:13px;color:var(--muted)">蛋白質 <strong id="mac-p" style="color:var(--blue)">0g</strong></span>
-            <span style="font-size:13px;color:var(--muted)">碳水 <strong id="mac-c" style="color:var(--warn)">0g</strong></span>
-            <span style="font-size:13px;color:var(--muted)">脂肪 <strong id="mac-f" style="color:var(--purple)">0g</strong></span>
+
+        <!-- Calorie row -->
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div>
+            <span style="font-size:28px;font-weight:800;color:var(--accent)" id="cal-today">0</span>
+            <span style="font-size:13px;color:var(--muted)"> / <span id="cal-goal-val2">2000</span> kcal</span>
           </div>
+          <span id="cal-status" style="font-size:14px;color:var(--accent)"></span>
         </div>
-        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-bar" style="width:0%"></div></div>
+        <div class="cal-bar-wrap" style="margin-bottom:14px">
+          <div class="cal-bar" id="cal-bar" style="width:0%"></div>
+        </div>
+
+        <!-- Protein row -->
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div>
+            <span style="font-size:20px;font-weight:700;color:var(--blue)" id="mac-p">0g</span>
+            <span style="font-size:13px;color:var(--muted)"> 蛋白質 / 目標 <span id="protein-goal-val">120</span>g</span>
+          </div>
+          <span id="protein-status" style="font-size:14px;color:var(--blue)"></span>
+        </div>
+        <div class="cal-bar-wrap" style="margin-bottom:14px">
+          <div class="cal-bar" id="protein-bar" style="width:0%;background:var(--blue)"></div>
+        </div>
+
+        <!-- Carbs & Fat -->
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <span style="font-size:14px;color:var(--muted)">碳水 <strong id="mac-c" style="color:var(--warn)">0g</strong></span>
+          <span style="font-size:14px;color:var(--muted)">脂肪 <strong id="mac-f" style="color:var(--purple)">0g</strong></span>
+        </div>
       </div>
       <div id="diet-list"></div>
     </div>
@@ -529,6 +552,30 @@ canvas{display:block}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Photo Confirm Modal -->
+<div id="photo-confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;align-items:center;justify-content:center;padding:1rem;overflow-y:auto">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1.5rem;width:100%;max-width:440px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:1rem">📷 確認辨識結果</div>
+    <img id="pc-img" style="width:100%;max-height:200px;object-fit:contain;border-radius:var(--r-sm);background:var(--s2);margin-bottom:1rem">
+    <div class="field"><label>食物名稱</label><input id="pc-name"></div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px" id="pc-serving"></div>
+    <input type="hidden" id="pc-meal">
+    <div class="grid2">
+      <div class="field"><label>熱量 kcal</label><input type="number" id="pc-cal" step="0.1"></div>
+      <div class="field"><label>蛋白質 g</label><input type="number" id="pc-p" step="0.1"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>碳水 g</label><input type="number" id="pc-c" step="0.1"></div>
+      <div class="field"><label>脂肪 g</label><input type="number" id="pc-f" step="0.1"></div>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">數值有誤可直接修改後再儲存</p>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-accent" onclick="dietPhotoSave()" style="flex:1">✓ 確認儲存</button>
+      <button class="btn" onclick="document.getElementById('photo-confirm-modal').style.display='none'">取消</button>
+    </div>
+  </div>
+</div>
 
 <!-- Edit Diet Modal -->
 <div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:1rem">
@@ -1042,6 +1089,77 @@ async function dietAdd(){
   }
   document.getElementById('diet-analyzing').style.display='none';
 }
+async function dietPhotoAdd(input){
+  var file=input.files[0];
+  if(!file) return;
+  var key=window._geminiKey;
+  if(!key){toast('請先設定 Gemini API Key',1);input.value='';return;}
+  var meal=document.getElementById('diet-meal').value;
+  document.getElementById('diet-analyzing').style.display='block';
+  document.getElementById('diet-analyzing').textContent='📷 Gemini 圖片辨識中...';
+  try{
+    // Convert image to base64
+    var base64=await new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onload=function(e){resolve(e.target.result.split(',')[1]);};
+      reader.onerror=reject;
+      reader.readAsDataURL(file);
+    });
+    var mimeType=file.type||'image/jpeg';
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[
+          {inline_data:{mime_type:mimeType,data:base64}},
+          {text:'請分析這張圖片中的食物或營養成分標示。如果是營養標示，請以整份（整包/整瓶）計算；如果是食物照片，請估算合理份量。回傳純JSON（不要有任何說明或markdown）：{"name":"食物名稱","serving":"份量說明","calories":熱量數字,"protein":蛋白質克數,"carbs":碳水克數,"fat":脂肪克數}'}
+        ]}]
+      })
+    });
+    var data=await res.json();
+    if(data.error){toast('API 錯誤：'+data.error.message,1);return;}
+    var txt=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'';
+    txt=txt.replace(/```json|```/g,'').trim();
+    var info=JSON.parse(txt);
+    // Show preview for user to confirm
+    dietPhotoConfirm(info, meal, base64, mimeType);
+  } catch(e){
+    toast('辨識失敗，請重試',1);console.error(e);
+  }
+  document.getElementById('diet-analyzing').style.display='none';
+  input.value='';
+}
+
+function dietPhotoConfirm(info, meal, base64, mimeType){
+  var modal=document.getElementById('photo-confirm-modal');
+  document.getElementById('pc-img').src='data:'+mimeType+';base64,'+base64;
+  document.getElementById('pc-name').value=info.name||'';
+  document.getElementById('pc-serving').textContent=info.serving||'';
+  document.getElementById('pc-cal').value=info.calories||0;
+  document.getElementById('pc-p').value=info.protein||0;
+  document.getElementById('pc-c').value=info.carbs||0;
+  document.getElementById('pc-f').value=info.fat||0;
+  document.getElementById('pc-meal').value=meal;
+  modal.style.display='flex';
+}
+
+async function dietPhotoSave(){
+  var meal=document.getElementById('pc-meal').value;
+  var rec={
+    date:new Date().toISOString().slice(0,10),
+    meal:meal,
+    name:document.getElementById('pc-name').value||'照片食物',
+    calories:parseFloat(document.getElementById('pc-cal').value)||0,
+    protein:parseFloat(document.getElementById('pc-p').value)||0,
+    carbs:parseFloat(document.getElementById('pc-c').value)||0,
+    fat:parseFloat(document.getElementById('pc-f').value)||0
+  };
+  var docId=await push('diet',rec);if(docId)rec._id=docId;
+  window._DT.unshift(rec);
+  document.getElementById('photo-confirm-modal').style.display='none';
+  renderDiet();
+  toast('✓ 已記錄 '+rec.name+'（'+rec.calories+' kcal）');
+}
+
 function renderDiet(){
   var today=new Date().toISOString().slice(0,10);
   var todayItems=window._DT.filter(function(d){return d.date===today;});
@@ -1050,12 +1168,42 @@ function renderDiet(){
   var totalC=todayItems.reduce(function(a,d){return a+d.carbs;},0);
   var totalF=todayItems.reduce(function(a,d){return a+d.fat;},0);
   var goal=parseInt(localStorage.getItem('cal_goal')||'2000');
-  document.getElementById('cal-today').textContent=totalCal;
+  var proteinGoal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
+  document.getElementById('cal-today').textContent=Math.round(totalCal);
   document.getElementById('cal-goal-val').textContent=goal;
+  document.getElementById('cal-goal-val2').textContent=goal;
   document.getElementById('mac-p').textContent=totalP.toFixed(0)+'g';
   document.getElementById('mac-c').textContent=totalC.toFixed(0)+'g';
   document.getElementById('mac-f').textContent=totalF.toFixed(0)+'g';
-  document.getElementById('cal-bar').style.width=Math.min(100,Math.round(totalCal/goal*100))+'%';
+  document.getElementById('protein-goal-val').textContent=proteinGoal;
+  // Calorie bar & status
+  var calPct=Math.min(100,Math.round(totalCal/goal*100));
+  document.getElementById('cal-bar').style.width=calPct+'%';
+  document.getElementById('cal-bar').style.background=calPct>=100?'var(--danger)':'var(--accent)';
+  var calLeft=Math.round(goal-totalCal);
+  var calStatus='';
+  if(calLeft>0){
+    calStatus='距離控制線還有 <strong>'+calLeft+' kcal</strong>，請保持 💪';
+    document.getElementById('cal-status').style.color='var(--accent)';
+  } else {
+    calStatus='已超標 <strong>'+(calLeft*-1)+' kcal</strong> ⚠️';
+    document.getElementById('cal-status').style.color='var(--danger)';
+  }
+  document.getElementById('cal-status').innerHTML=calStatus;
+  // Protein bar & status
+  var proteinPct=Math.min(100,Math.round(totalP/proteinGoal*100));
+  document.getElementById('protein-bar').style.width=proteinPct+'%';
+  document.getElementById('protein-bar').style.background=proteinPct>=100?'var(--accent)':'var(--blue)';
+  var proteinLeft=Math.round(proteinGoal-totalP);
+  var proteinStatus='';
+  if(proteinLeft>0){
+    proteinStatus='還差 <strong>'+proteinLeft+'g</strong> 加油！ 🥩';
+    document.getElementById('protein-status').style.color='var(--blue)';
+  } else {
+    proteinStatus='✓ 蛋白質達標！ 🎉';
+    document.getElementById('protein-status').style.color='var(--accent)';
+  }
+  document.getElementById('protein-status').innerHTML=proteinStatus;
   var meals=['早餐','午餐','晚餐','點心'];
   var el=document.getElementById('diet-list');
   var html='';
