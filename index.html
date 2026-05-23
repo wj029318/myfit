@@ -207,6 +207,14 @@ canvas{display:block}
 .bmi-over{background:rgba(240,196,110,.12);color:var(--warn);border:1px solid rgba(240,196,110,.3)}
 .bmi-obese{background:rgba(240,112,112,.12);color:var(--danger);border:1px solid rgba(240,112,112,.3)}
 
+/* Goal mode buttons */
+.goal-mode-btn{background:var(--s2);border:2px solid var(--border);border-radius:var(--r-sm);padding:12px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit;color:var(--text)}
+.goal-mode-btn:hover{border-color:var(--border2);background:var(--surface)}
+.goal-mode-btn.on{border-color:var(--accent);background:rgba(200,240,110,.06)}
+.goal-mode-btn#gm-cut-mid.on{border-color:var(--blue)}
+.goal-mode-btn#gm-cut-fast.on{border-color:var(--warn)}
+.goal-mode-btn#gm-bulk.on{border-color:var(--purple)}
+
 /* toast */
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--accent);color:#000;padding:11px 18px;border-radius:var(--r-sm);font-size:14px;font-weight:600;z-index:999;transform:translateY(16px);opacity:0;transition:.25s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
@@ -276,6 +284,7 @@ canvas{display:block}
     <button class="nav" onclick="go('body')">⚖️ &nbsp;身體數據</button>
     <button class="nav" onclick="go('diet')">🥗 &nbsp;飲食記錄</button>
     <button class="nav" onclick="go('ai')">🤖 &nbsp;AI 教練</button>
+    <button class="nav" onclick="go('goals')">🎯 &nbsp;我的目標</button>
     <button class="nav" onclick="go('templates')">📋 &nbsp;訓練範本</button>
     <button class="nav" onclick="go('history')">🕐 &nbsp;歷史紀錄</button>
     <button class="nav" onclick="go('progress')">📈 &nbsp;進步分析</button>
@@ -450,6 +459,32 @@ canvas{display:block}
     </div>
 
     <!-- TEMPLATES -->
+    <!-- GOALS -->
+    <div id="pg-goals" class="pg">
+      <div class="pg-title">🎯 我的目標</div>
+      <div class="card">
+        <div class="card-lbl">設定目標</div>
+        <div class="grid2">
+          <div class="field"><label>目標體重 (kg)</label><input type="number" id="goal-weight" placeholder="68" step="0.1" min="30" max="200"></div>
+          <div class="field"><label>目標體脂肪 (%)</label><input type="number" id="goal-fat" placeholder="15" step="0.1" min="3" max="50"></div>
+        </div>
+        <div class="field"><label>目標日期</label><input type="date" id="goal-date"></div>
+        <div class="field"><label>備註（例：參加婚禮、健身比賽...）</label><input id="goal-note" placeholder="可選填"></div>
+        <button class="btn btn-accent" onclick="saveGoal()" style="width:100%">儲存目標 🎯</button>
+      </div>
+      <div id="goal-display" style="display:none">
+        <div class="card">
+          <div class="card-lbl">目標進度</div>
+          <div id="goal-progress-content"></div>
+        </div>
+        <div class="card">
+          <div class="card-lbl">AI 評估</div>
+          <button class="btn btn-purple" onclick="aiGoalEval()" style="width:100%;margin-bottom:10px">🤖 請 AI 評估達成可能性</button>
+          <div id="goal-ai-eval"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="pg-templates" class="pg">
       <div class="pg-title">📋 訓練範本</div>
       <div class="card">
@@ -545,11 +580,46 @@ canvas{display:block}
         </div>
       </div>
       <div class="card">
-        <div class="card-lbl">每日熱量目標</div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">由 TDEE 自動計算，或手動覆蓋</p>
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <div class="field" style="flex:1;margin-bottom:0"><label>目標 kcal</label><input type="number" id="cal-goal-input" placeholder="2000" min="500" max="5000"></div>
-          <button class="btn btn-accent" onclick="saveCalGoal()" style="margin-bottom:0">儲存</button>
+        <div class="card-lbl">健身目標</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:12px">選擇目標後自動設定每日熱量，需先完成上方 TDEE 計算</p>
+        <div id="goal-mode-btns" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <button class="goal-mode-btn" id="gm-cut-slow" onclick="setGoalMode('cut-slow')">
+            <div style="font-size:18px">🐢</div>
+            <div style="font-weight:700;font-size:15px">慢速減脂</div>
+            <div style="font-size:12px;color:var(--muted)">-500 kcal · -0.5kg/週</div>
+            <div id="gm-cut-slow-val" style="font-size:13px;color:var(--accent);margin-top:4px"></div>
+          </button>
+          <button class="goal-mode-btn" id="gm-cut-mid" onclick="setGoalMode('cut-mid')">
+            <div style="font-size:18px">🏃</div>
+            <div style="font-weight:700;font-size:15px">中速減脂</div>
+            <div style="font-size:12px;color:var(--muted)">-800 kcal · -0.8kg/週</div>
+            <div id="gm-cut-mid-val" style="font-size:13px;color:var(--accent);margin-top:4px"></div>
+          </button>
+          <button class="goal-mode-btn" id="gm-cut-fast" onclick="setGoalMode('cut-fast')">
+            <div style="font-size:18px">⚡</div>
+            <div style="font-weight:700;font-size:15px">快速減脂</div>
+            <div style="font-size:12px;color:var(--muted)">-1000 kcal · -1kg/週</div>
+            <div id="gm-cut-fast-val" style="font-size:13px;color:var(--accent);margin-top:4px"></div>
+          </button>
+          <button class="goal-mode-btn" id="gm-maintain" onclick="setGoalMode('maintain')">
+            <div style="font-size:18px">⚖️</div>
+            <div style="font-weight:700;font-size:15px">維持體重</div>
+            <div style="font-size:12px;color:var(--muted)">TDEE · 維持現狀</div>
+            <div id="gm-maintain-val" style="font-size:13px;color:var(--accent);margin-top:4px"></div>
+          </button>
+          <button class="goal-mode-btn" id="gm-bulk" onclick="setGoalMode('bulk')" style="grid-column:1/-1">
+            <div style="font-size:18px">💪</div>
+            <div style="font-weight:700;font-size:15px">增肌增重</div>
+            <div style="font-size:12px;color:var(--muted)">+300 kcal · 增肌期</div>
+            <div id="gm-bulk-val" style="font-size:13px;color:var(--accent);margin-top:4px"></div>
+          </button>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:8px">或手動設定</p>
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div class="field" style="flex:1;margin-bottom:0"><label>目標 kcal</label><input type="number" id="cal-goal-input" placeholder="2000" min="500" max="5000"></div>
+            <button class="btn btn-accent" onclick="saveCalGoal()" style="margin-bottom:0">儲存</button>
+          </div>
         </div>
       </div>
       <div class="card">
@@ -570,6 +640,7 @@ canvas{display:block}
     <button class="more-item" onclick="go('history');closeMore()"><span class="more-icon">🕐</span>歷史紀錄</button>
     <button class="more-item" onclick="go('progress');closeMore()"><span class="more-icon">📈</span>進步分析</button>
     <button class="more-item" onclick="go('habit');closeMore()"><span class="more-icon">📅</span>打卡習慣</button>
+    <button class="more-item" onclick="go('goals');closeMore()"><span class="more-icon">🎯</span>我的目標</button>
     <button class="more-item" onclick="go('templates');closeMore()"><span class="more-icon">📋</span>訓練範本</button>
     <button class="more-item" onclick="go('settings');closeMore()"><span class="more-icon">⚙️</span>設定</button>
     <button class="more-item" onclick="doLogout()"><span class="more-icon">⎋</span>登出</button>
@@ -743,6 +814,10 @@ async function loadAll(){
     window._BD=[];bSnap.forEach(function(d){window._BD.push(d.data());});
     var dSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'diet'),fns.orderBy('createdAt','desc')));
     window._DT=[];dSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._DT.push(rec);});
+    var tSnap=await fns.getDocs(fns.query(fns.collection(db,'users',uid,'templates'),fns.orderBy('createdAt','desc')));
+    window._TPLS=[];tSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._TPLS.push(rec);});
+    var gSnap=await fns.getDocs(fns.collection(db,'users',uid,'goals'));
+    window._GOALS=[];gSnap.forEach(function(d){var rec=d.data();rec._id=d.id;window._GOALS.push(rec);});
     // Load user settings from Firebase
     var settingsRef=fns.doc(db,'users',uid,'settings','prefs');
     var settingsSnap=await fns.getDoc(settingsRef);
@@ -769,7 +844,7 @@ async function push(colName,data){
 }
 
 // ── Nav ─────────────────────────────────────────────────
-var PAGES=['log','body','diet','ai','templates','history','progress','habit','settings'];
+var PAGES=['log','body','diet','ai','goals','templates','history','progress','habit','settings'];
 function go(p){
   document.querySelectorAll('.pg').forEach(function(e){e.classList.remove('on');});
   document.querySelectorAll('.nav').forEach(function(e){e.classList.remove('on');});
@@ -786,6 +861,7 @@ function go(p){
   if(p==='habit') renderHabit();
   if(p==='body') renderBody();
   if(p==='ai') renderAiChat();
+  if(p==='goals') renderGoals();
   if(p==='diet') renderDiet();
   if(p==='templates') renderTemplates();
   if(p==='settings') renderSettings();
@@ -940,7 +1016,9 @@ function resetLogForm(){
 }
 
 // ── Templates ────────────────────────────────────────────
-function saveTplPrompt(){
+// ── Templates (Firebase) ─────────────────────────────────
+window._TPLS=[];
+async function saveTplPrompt(){
   var name=prompt('範本名稱：');
   if(!name) return;
   var exs=[];
@@ -954,35 +1032,79 @@ function saveTplPrompt(){
     if(sets.length) exs.push({name:nm,sets:sets});
   });
   if(!exs.length){toast('沒有動作可儲存',1);return;}
-  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
-  tpls.unshift({name:name,exercises:exs,date:new Date().toISOString().slice(0,10)});
-  localStorage.setItem('tpls',JSON.stringify(tpls));
-  toast('✓ 範本「'+name+'」已儲存！');
+  var tpl={name:name,exercises:exs,date:new Date().toISOString().slice(0,10)};
+  var docId=await push('templates',tpl);
+  if(docId) tpl._id=docId;
+  window._TPLS.unshift(tpl);
+  renderTemplates();
+  toast('✓ 範本「'+name+'」已儲存至雲端！');
 }
 function loadTpl(idx){
-  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
-  var tpl=tpls[idx];if(!tpl) return;
+  var tpl=window._TPLS[idx];if(!tpl) return;
   document.getElementById('exlist').innerHTML='';exCount=0;
   tpl.exercises.forEach(function(e){addEx(e.name);});
   go('log');toast('✓ 已套用範本「'+tpl.name+'」');
 }
-function deleteTpl(idx){
-  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
-  tpls.splice(idx,1);localStorage.setItem('tpls',JSON.stringify(tpls));
-  renderTemplates();toast('範本已刪除');
+async function deleteTpl(idx){
+  var tpl=window._TPLS[idx];if(!tpl) return;
+  if(!confirm('確定刪除範本「'+tpl.name+'」？')) return;
+  window._TPLS.splice(idx,1);
+  renderTemplates();
+  if(tpl._id){
+    try{
+      var {deleteDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      await deleteDoc(doc(window._db,'users',window._uid,'templates',tpl._id));
+      toast('✓ 範本已刪除');
+    } catch(e){ toast('刪除失敗',1);console.error(e); }
+  }
 }
 function renderTemplates(){
-  var tpls=JSON.parse(localStorage.getItem('tpls')||'[]');
   var el=document.getElementById('tpl-list');
-  if(!tpls.length){el.innerHTML='<div class="empty">尚無範本，在新增訓練頁儲存課表後會出現在這裡</div>';return;}
-  el.innerHTML=tpls.map(function(t,i){
+  if(!window._TPLS.length){
+    // Also check localStorage for migration
+    var local=JSON.parse(localStorage.getItem('tpls')||'[]');
+    if(local.length){
+      el.innerHTML='<div style="color:var(--muted);font-size:14px;padding:8px 0">偵測到舊版範本，正在遷移至雲端...</div>';
+      migrateLocalTpls(local);return;
+    }
+    el.innerHTML='<div class="empty">尚無範本，在新增訓練頁儲存課表後會出現在這裡</div>';return;
+  }
+  // Show week plan if exists
+  var weekPlan=JSON.parse(localStorage.getItem('week_plan')||'{}');
+  var hasWeekPlan=Object.keys(weekPlan).some(function(k){return weekPlan[k]&&weekPlan[k].length;});
+  var weekHtml=hasWeekPlan?'<div class="card-lbl" style="margin-top:1rem;margin-bottom:.5rem">📅 本週 AI 課表</div>'+
+    Object.entries(weekPlan).map(function(kv){
+      if(!kv[1]||!kv[1].length) return '';
+      return '<div class="tpl-item"><div><div class="tpl-name">'+['週日','週一','週二','週三','週四','週五','週六'][kv[0]]+'</div>'+
+        '<div class="tpl-sub">'+kv[1].join('、')+'</div></div>'+
+        '<button class="btn btn-sm btn-accent" onclick="applyDayPlan('+kv[0]+')">套用</button></div>';
+    }).join(''):'';
+  el.innerHTML=window._TPLS.map(function(t,i){
     return '<div class="tpl-item">'+
-      '<div><div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.exercises.map(function(e){return e.name;}).join('、')+'</div></div>'+
+      '<div><div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.date+' · '+t.exercises.map(function(e){return e.name;}).join('、')+'</div></div>'+
       '<div style="display:flex;gap:6px">'+
         '<button class="btn btn-sm btn-accent" onclick="loadTpl('+i+')">套用</button>'+
         '<button class="btn btn-sm btn-del" onclick="deleteTpl('+i+')">刪除</button>'+
       '</div></div>';
-  }).join('');
+  }).join('')+weekHtml;
+}
+async function migrateLocalTpls(local){
+  for(var i=0;i<local.length;i++){
+    var tpl=local[i];
+    var docId=await push('templates',tpl);
+    if(docId) tpl._id=docId;
+    window._TPLS.push(tpl);
+  }
+  localStorage.removeItem('tpls');
+  renderTemplates();
+  toast('✓ 已將 '+local.length+' 個範本遷移至雲端！');
+}
+function applyDayPlan(day){
+  var plan=JSON.parse(localStorage.getItem('week_plan')||'{}');
+  var exs=plan[day];if(!exs||!exs.length) return;
+  document.getElementById('exlist').innerHTML='';exCount=0;
+  exs.forEach(function(n){addEx(n);});
+  go('log');toast('✓ 已套用'+['週日','週一','週二','週三','週四','週五','週六'][day]+'課表');
 }
 
 // ── Apply AI workout plan ────────────────────────────────
@@ -1469,7 +1591,134 @@ async function genWeeklyReport(){
   aiAsk(q);
 }
 
+// ── Goals ────────────────────────────────────────────────
+window._GOALS=[];
+async function saveGoal(){
+  var gw=parseFloat(document.getElementById('goal-weight').value);
+  var gf=parseFloat(document.getElementById('goal-fat').value);
+  var gd=document.getElementById('goal-date').value;
+  var gn=document.getElementById('goal-note').value.trim();
+  if(!gw&&!gf){toast('請至少填寫目標體重或體脂',1);return;}
+  var goal={date:new Date().toISOString().slice(0,10),targetWeight:gw||null,targetFat:gf||null,targetDate:gd||null,note:gn||''};
+  var docId=await push('goals',goal);
+  if(docId) goal._id=docId;
+  window._GOALS.unshift(goal);
+  document.getElementById('goal-weight').value='';
+  document.getElementById('goal-fat').value='';
+  document.getElementById('goal-date').value='';
+  document.getElementById('goal-note').value='';
+  toast('✓ 目標已儲存！');
+  renderGoals();
+}
+function renderGoals(){
+  var latest=window._BD[0]||{};
+  var goal=window._GOALS[0];
+  var display=document.getElementById('goal-display');
+  if(!goal){display.style.display='none';return;}
+  display.style.display='block';
+  var html='';
+  // Weight progress
+  if(goal.targetWeight&&latest.weight){
+    var wStart=window._BD.length>1?window._BD[window._BD.length-1].weight:latest.weight;
+    var wCur=latest.weight;var wTarget=goal.targetWeight;
+    var wTotal=wStart-wTarget;var wDone=wStart-wCur;
+    var wPct=wTotal>0?Math.min(100,Math.round(wDone/wTotal*100)):100;
+    html+='<div style="margin-bottom:14px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+        '<span style="font-size:15px;font-weight:600">體重</span>'+
+        '<span style="font-size:14px;color:var(--muted)">'+wCur+'kg → 目標 '+wTarget+'kg（差 '+(wCur-wTarget).toFixed(1)+'kg）</span>'+
+      '</div>'+
+      '<div class="cal-bar-wrap"><div class="cal-bar" style="width:'+wPct+'%;background:var(--blue)"></div></div>'+
+      '<div style="font-size:13px;color:var(--muted);margin-top:4px">進度 '+wPct+'%</div>'+
+    '</div>';
+  }
+  // Fat progress
+  if(goal.targetFat&&latest.fat!=null){
+    var fCur=latest.fat;var fTarget=goal.targetFat;
+    var fStart=window._BD.length>1?window._BD[window._BD.length-1].fat||fCur:fCur;
+    var fTotal=fStart-fTarget;var fDone=fStart-fCur;
+    var fPct=fTotal>0?Math.min(100,Math.round(fDone/fTotal*100)):100;
+    html+='<div style="margin-bottom:14px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+        '<span style="font-size:15px;font-weight:600">體脂肪</span>'+
+        '<span style="font-size:14px;color:var(--muted)">'+fCur+'% → 目標 '+fTarget+'%（差 '+(fCur-fTarget).toFixed(1)+'%）</span>'+
+      '</div>'+
+      '<div class="cal-bar-wrap"><div class="cal-bar" style="width:'+fPct+'%;background:var(--purple)"></div></div>'+
+      '<div style="font-size:13px;color:var(--muted);margin-top:4px">進度 '+fPct+'%</div>'+
+    '</div>';
+  }
+  // Days remaining
+  if(goal.targetDate){
+    var daysLeft=Math.ceil((new Date(goal.targetDate)-new Date())/(1000*60*60*24));
+    html+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">'+
+      '<div class="mcard" style="flex:1"><div class="mval warn">'+Math.max(0,daysLeft)+'</div><div class="mlbl">剩餘天數</div></div>'+
+      '<div class="mcard" style="flex:1"><div class="mval">'+Math.ceil(Math.max(0,daysLeft)/7)+'</div><div class="mlbl">剩餘週數</div></div>'+
+    '</div>';
+  }
+  if(goal.note) html+='<div style="margin-top:12px;font-size:14px;color:var(--muted)">📝 '+goal.note+'</div>';
+  document.getElementById('goal-progress-content').innerHTML=html||'<div style="color:var(--muted);font-size:14px">請先記錄身體數據才能顯示進度</div>';
+}
+async function aiGoalEval(){
+  var goal=window._GOALS[0];var latest=window._BD[0]||{};
+  if(!goal){toast('請先設定目標',1);return;}
+  var q='我的目前狀況：體重 '+(latest.weight||'未知')+'kg，體脂 '+(latest.fat||'未知')+'%。'
+    +'我的目標：'+(goal.targetWeight?'體重降到 '+goal.targetWeight+'kg，':'')
+    +(goal.targetFat?'體脂降到 '+goal.targetFat+'%，':'')
+    +(goal.targetDate?'在 '+goal.targetDate+' 之前達成。':'')
+    +'請評估這個目標的可行性，給出具體的週計畫建議（訓練頻率、飲食策略、預期進度），並告訴我最可能遇到的挑戰。';
+  document.getElementById('goal-ai-eval').innerHTML='<div style="color:var(--muted);font-size:14px">AI 評估中...</div>';
+  go('ai');
+  aiAsk(q);
+}
+
 // ── TDEE ────────────────────────────────────────────────
+function setGoalMode(mode){
+  var prefs=window._userPrefs||{};
+  var tdee=prefs.cal_goal||parseInt(localStorage.getItem('cal_goal')||'2000');
+  var deficits={'cut-slow':-500,'cut-mid':-800,'cut-fast':-1000,'maintain':0,'bulk':300};
+  var goal=tdee+(deficits[mode]||0);
+  goal=Math.max(1200,goal);
+  document.getElementById('cal-goal-input').value=goal;
+  // Highlight selected
+  ['cut-slow','cut-mid','cut-fast','maintain','bulk'].forEach(function(m){
+    var btn=document.getElementById('gm-'+m);
+    if(btn) btn.classList.toggle('on',m===mode);
+  });
+  // Save
+  localStorage.setItem('cal_goal',goal);
+  localStorage.setItem('goal_mode',mode);
+  try{
+    var fns=window._fbFns,db=window._db;
+    fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{cal_goal:goal,goal_mode:mode},{merge:true});
+  } catch(e){ console.error(e); }
+  toast('✓ 已設定：'+goal+' kcal / 日');
+  renderDiet();
+}
+function renderGoalModes(){
+  var prefs=window._userPrefs||{};
+  var tdee=prefs.cal_goal;
+  if(!tdee) return;
+  var modes={
+    'cut-slow':{def:-500,id:'gm-cut-slow-val'},
+    'cut-mid':{def:-800,id:'gm-cut-mid-val'},
+    'cut-fast':{def:-1000,id:'gm-cut-fast-val'},
+    'maintain':{def:0,id:'gm-maintain-val'},
+    'bulk':{def:300,id:'gm-bulk-val'}
+  };
+  Object.entries(modes).forEach(function(kv){
+    var el=document.getElementById(kv[1].id);
+    if(el) el.textContent=Math.max(1200,tdee+kv[1].def)+' kcal';
+  });
+  // Restore selected mode
+  var curMode=prefs.goal_mode||localStorage.getItem('goal_mode');
+  if(curMode){
+    ['cut-slow','cut-mid','cut-fast','maintain','bulk'].forEach(function(m){
+      var btn=document.getElementById('gm-'+m);
+      if(btn) btn.classList.toggle('on',m===curMode);
+    });
+  }
+}
+
 function calcTDEE(gender, age, weight, height, activity){
   // Mifflin-St Jeor
   var bmr = gender==='male'
@@ -1494,6 +1743,7 @@ async function saveTdeeProfile(){
     var fns=window._fbFns,db=window._db;
     await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),prefs,{merge:true});
     toast('✓ TDEE '+tdee+' kcal 已儲存，體重更新時自動調整！');
+    renderGoalModes();
   } catch(e){ toast('儲存失敗',1);console.error(e); }
   renderDiet();
 }
@@ -1578,6 +1828,7 @@ function renderSettings(){
   if(prefs.tdee_age) document.getElementById('tdee-age').value=prefs.tdee_age;
   if(prefs.tdee_activity) document.getElementById('tdee-activity').value=prefs.tdee_activity;
   if(prefs.cal_goal) document.getElementById('tdee-result').textContent='TDEE：'+prefs.cal_goal+' kcal / 日';
+  renderGoalModes();
 }
 
 // ── Toast ────────────────────────────────────────────────
