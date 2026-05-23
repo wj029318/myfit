@@ -1133,50 +1133,52 @@ function applyAiPlan(text){
   go('log');toast('✓ 已套用 AI 課表，共 '+exs.length+' 個動作！');
 }
 async function saveWeekPlan(text){
-  var key=window._geminiKey;
-  if(!key){toast('請先設定 Gemini API Key',1);return;}
-  toast('解析課表中...');
-  try{
-    // Use Gemini to parse the plan reliably
-    var allEx=Object.values(EX_CATS).flat();
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{role:'user',parts:[{text:
-        '以下是一份週訓練計畫，請從中萃取每天的訓練動作。\n\n可用動作清單：'+allEx.join('、')+'\n\n訓練計畫內容：\n'+text+
-        '\n\n請回傳純JSON（不要有說明或markdown），格式如下，key為數字0=週日,1=週一...6=週六，value為動作名稱陣列（只能使用可用動作清單中的名稱，休息日給空陣列）：{"0":[],"1":["臥推","深蹲"],"2":[]}'
-      }]}]})
+  // Pure text parsing - no Gemini needed
+  var plan={};
+  var dayMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
+  var allEx=Object.values(EX_CATS).flat();
+  var lines=text.split('\n');
+  var curDay=-1;
+  lines.forEach(function(l){
+    // Detect day keywords
+    Object.entries(dayMap).forEach(function(kv){
+      if(l.includes('週'+kv[0])||l.includes('星期'+kv[0])||
+         l.match(new RegExp('Day\\s*'+({'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7,'天':7}[kv[0]]||99)))){
+        curDay=kv[1];
+        if(!plan[curDay]) plan[curDay]=[];
+      }
     });
-    var data=await res.json();
-    var txt=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'';
-    txt=txt.replace(/```json|```/g,'').trim();
-    var plan=JSON.parse(txt);
-    var hasPlan=Object.values(plan).some(function(v){return v&&v.length;});
-    if(!hasPlan){toast('無法解析課表，請重試',1);return;}
-    // Save to Firebase
-    var fns=window._fbFns,db=window._db;
-    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','weekplan'),{plan:plan,savedAt:new Date().toISOString()},{merge:false});
-    localStorage.setItem('week_plan',JSON.stringify(plan));
-    window._weekPlan=plan;
-    renderTemplates();
-    toast('✓ 下週課表已儲存至雲端！每天開啟自動載入 📅');
-  } catch(e){
-    // Fallback to simple parse
-    var plan={};
-    var dayMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0};
-    var allEx=Object.values(EX_CATS).flat();
-    var lines=text.split('\n');var curDay=-1;
-    lines.forEach(function(l){
-      Object.entries(dayMap).forEach(function(kv){
-        if(l.includes('週'+kv[0])||l.includes('星期'+kv[0])){curDay=kv[1];if(!plan[curDay])plan[curDay]=[];}
+    // Detect exercises in current day
+    if(curDay>=0){
+      allEx.forEach(function(name){
+        if(l.includes(name)&&!(plan[curDay]||[]).includes(name)){
+          if(!plan[curDay]) plan[curDay]=[];
+          plan[curDay].push(name);
+        }
       });
-      if(curDay>=0){allEx.forEach(function(name){if(l.includes(name)&&!(plan[curDay]||[]).includes(name)){if(!plan[curDay])plan[curDay]=[];plan[curDay].push(name);}});}
-    });
-    var hasPlan=Object.keys(plan).some(function(k){return plan[k].length>0;});
-    if(!hasPlan){toast('解析失敗，請確認 AI 回答包含星期和動作名稱',1);return;}
+    }
+  });
+  var hasPlan=Object.keys(plan).some(function(k){return plan[k]&&plan[k].length>0;});
+  if(!hasPlan){
+    toast('⚠️ 無法解析課表，請確認 AI 回答包含「週一」「週二」等字樣和動作名稱',1);
+    return;
+  }
+  // Save to Firebase
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','weekplan'),
+      {plan:plan,savedAt:new Date().toISOString()},{merge:false});
     localStorage.setItem('week_plan',JSON.stringify(plan));
     window._weekPlan=plan;
     renderTemplates();
-    toast('✓ 課表已儲存（本機）');
+    var days=Object.entries(plan).filter(function(kv){return kv[1]&&kv[1].length;}).length;
+    toast('✓ 課表已儲存至雲端！共 '+days+' 天，電腦手機都能看到 📅');
+  } catch(e){
+    // Firebase failed, save locally at least
+    localStorage.setItem('week_plan',JSON.stringify(plan));
+    window._weekPlan=plan;
+    renderTemplates();
+    toast('課表已儲存（本機），Firebase 同步失敗',1);
     console.error(e);
   }
 }
