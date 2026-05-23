@@ -754,12 +754,25 @@ var restSecs = 0;
 
 // ── Exercise library ─────────────────────────────────────
 var EX_CATS = {
-  '胸部':['臥推','上斜臥推','下斜臥推','蝴蝶機夾胸','啞鈴飛鳥','機械胸推'],
-  '背部':['引體向上','槓鈴划船','坐姿划船','滑輪下拉','單臂划船','T-Bar划船'],
-  '腿部':['深蹲','腿推','硬舉','羅馬尼亞硬舉','腿彎舉','腿伸展','弓步蹲','保加利亞深蹲'],
-  '肩部':['肩推','啞鈴側平舉','前平舉','啞鈴肩推','槓鈴肩推','俯身側平舉'],
-  '手臂':['二頭彎舉','錘式彎舉','三頭下壓','臂屈伸','窄握臥推','過頭三頭'],
-  '核心':['腹肌訓練','棒式','捲腹','懸掛舉腿','俄羅斯轉體','側捲腹']
+  '胸部':['臥推','上斜臥推','下斜臥推','蝴蝶機夾胸','啞鈴飛鳥','機械胸推','啞鈴臥推','上斜啞鈴臥推','蝴蝶機擴胸'],
+  '背部':['引體向上','槓鈴划船','坐姿划船','滑輪下拉','單臂划船','T-Bar划船','俯身划船','反向飛鳥','滑輪下拉'],
+  '腿部':['深蹲','腿推','硬舉','羅馬尼亞硬舉','腿彎舉','腿伸展','弓步蹲','保加利亞深蹲','分腿蹲','六角槓硬舉','腿後勾','腿內收','腿外展','站姿提踵','坐姿提踵'],
+  '肩部':['肩推','啞鈴側平舉','前平舉','啞鈴肩推','槓鈴肩推','俯身側平舉','坐姿肩推','面拉'],
+  '手臂':['二頭彎舉','錘式彎舉','三頭下壓','臂屈伸','窄握臥推','過頭三頭','二頭彎舉','反向彎舉'],
+  '核心':['腹肌訓練','棒式','捲腹','懸掛舉腿','俄羅斯轉體','側捲腹','死蟲式','鳥狗式'],
+  '有氧':['跑步','快走','橢圓機','飛輪','划船機','跳繩','游泳','爬山','騎自行車','HIIT']
+};
+// Extended alias map for AI response matching
+var EX_ALIAS = {
+  'Lat Pulldown':'滑輪下拉','Seated Row':'坐姿划船','Triceps Pushdown':'三頭下壓',
+  'Bicep Curl':'二頭彎舉','Leg Press':'腿推','RDL':'羅馬尼亞硬舉',
+  'Leg Extension':'腿伸展','Leg Curl':'腿彎舉','Calf Raise':'站姿提踵',
+  'Pec Deck':'蝴蝶機擴胸','Reverse Fly':'反向飛鳥','Lunge':'弓步蹲',
+  'Split Squat':'分腿蹲','Hip Adduction':'腿內收','Hip Abduction':'腿外展',
+  '槓鈴深蹲':'深蹲','腿部推舉':'腿推','腿部伸展':'腿伸展','腿後勾':'腿彎舉',
+  '六角槓硬舉':'硬舉','傳統硬舉':'硬舉','分腿蹲':'弓步蹲',
+  '坐姿肩推':'肩推','啞鈴肩推':'肩推','俯身划船':'槓鈴划船',
+  '上斜啞鈴臥推':'上斜臥推','啞鈴臥推':'臥推','蝴蝶機擴胸':'蝴蝶機夾胸'
 };
 var selCat = '胸部';
 
@@ -1070,33 +1083,64 @@ async function deleteTpl(idx){
 }
 function renderTemplates(){
   var el=document.getElementById('tpl-list');
-  if(!window._TPLS.length){
-    // Also check localStorage for migration
-    var local=JSON.parse(localStorage.getItem('tpls')||'[]');
-    if(local.length){
-      el.innerHTML='<div style="color:var(--muted);font-size:14px;padding:8px 0">偵測到舊版範本，正在遷移至雲端...</div>';
-      migrateLocalTpls(local);return;
-    }
-    el.innerHTML='<div class="empty">尚無範本，在新增訓練頁儲存課表後會出現在這裡</div>';return;
-  }
-  // Show week plan if exists
+
+  // ── AI 週計畫區塊（獨立顯示，不受自訂範本影響）
   var weekPlan=window._weekPlan||JSON.parse(localStorage.getItem('week_plan')||'{}');
   var hasWeekPlan=Object.keys(weekPlan).some(function(k){return weekPlan[k]&&weekPlan[k].length;});
-  var weekHtml=hasWeekPlan?'<div class="card-lbl" style="margin-top:1rem;margin-bottom:.5rem">📅 本週 AI 課表</div>'+
-    Object.entries(weekPlan).map(function(kv){
-      if(!kv[1]||!kv[1].length) return '';
-      return '<div class="tpl-item"><div><div class="tpl-name">'+['週日','週一','週二','週三','週四','週五','週六'][kv[0]]+'</div>'+
-        '<div class="tpl-sub">'+kv[1].join('、')+'</div></div>'+
-        '<button class="btn btn-sm btn-accent" onclick="applyDayPlan('+kv[0]+')">套用</button></div>';
-    }).join(''):'';
-  el.innerHTML=window._TPLS.map(function(t,i){
-    return '<div class="tpl-item">'+
-      '<div><div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.date+' · '+t.exercises.map(function(e){return e.name;}).join('、')+'</div></div>'+
-      '<div style="display:flex;gap:6px">'+
-        '<button class="btn btn-sm btn-accent" onclick="loadTpl('+i+')">套用</button>'+
-        '<button class="btn btn-sm btn-del" onclick="deleteTpl('+i+')">刪除</button>'+
-      '</div></div>';
-  }).join('')+weekHtml;
+  var weekHtml='';
+  if(hasWeekPlan){
+    weekHtml='<div style="margin-bottom:1rem"><div class="card-lbl" style="margin-bottom:8px">📅 AI 週計畫</div>';
+    var sorted=Object.entries(weekPlan).sort(function(a,b){return +a[0]-+b[0];});
+    sorted.forEach(function(kv){
+      if(!kv[1]||!kv[1].length) return;
+      var dayName=['週日','週一','週二','週三','週四','週五','週六'][+kv[0]];
+      var isToday=(new Date().getDay()===+kv[0]);
+      weekHtml+='<div class="tpl-item">'+
+        '<div>'+
+          '<div class="tpl-name">'+dayName+(isToday?' <span style="font-size:12px;color:var(--accent);font-weight:400">← 今天</span>':'')+'</div>'+
+          '<div class="tpl-sub">'+kv[1].join('、')+'</div>'+
+        '</div>'+
+        '<button class="btn btn-sm btn-accent" onclick="applyDayPlan('+kv[0]+')">套用</button>'+
+      '</div>';
+    });
+    weekHtml+='<button class="btn btn-sm btn-del" onclick="clearWeekPlan()" style="margin-top:8px;width:100%">🗑 清除週計畫</button></div>';
+  }
+
+  // ── 自訂範本區塊
+  var tplHtml='';
+  // Check localStorage for migration
+  if(!window._TPLS.length){
+    var local=JSON.parse(localStorage.getItem('tpls')||'[]');
+    if(local.length){
+      tplHtml='<div style="color:var(--muted);font-size:14px;padding:8px 0">偵測到舊版範本，正在遷移至雲端...</div>';
+      migrateLocalTpls(local);
+    } else {
+      tplHtml='<div class="empty" style="padding:1.5rem 0">尚無自訂範本<br><span style="font-size:14px">在新增訓練頁點「💾 存範本」</span></div>';
+    }
+  } else {
+    tplHtml='<div class="card-lbl" style="margin-bottom:8px">我的範本</div>';
+    tplHtml+=window._TPLS.map(function(t,i){
+      return '<div class="tpl-item">'+
+        '<div><div class="tpl-name">'+t.name+'</div><div class="tpl-sub">'+t.date+' · '+t.exercises.map(function(e){return e.name;}).join('、')+'</div></div>'+
+        '<div style="display:flex;gap:6px">'+
+          '<button class="btn btn-sm btn-accent" onclick="loadTpl('+i+')">套用</button>'+
+          '<button class="btn btn-sm btn-del" onclick="deleteTpl('+i+')">刪除</button>'+
+        '</div></div>';
+    }).join('');
+  }
+
+  el.innerHTML=weekHtml+tplHtml;
+}
+async function clearWeekPlan(){
+  if(!confirm('確定清除 AI 週計畫？')) return;
+  window._weekPlan={};
+  localStorage.removeItem('week_plan');
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','weekplan'),{plan:{},savedAt:new Date().toISOString()});
+  } catch(e){ console.error(e); }
+  renderTemplates();
+  toast('週計畫已清除');
 }
 async function migrateLocalTpls(local){
   for(var i=0;i<local.length;i++){
@@ -1110,8 +1154,8 @@ async function migrateLocalTpls(local){
   toast('✓ 已將 '+local.length+' 個範本遷移至雲端！');
 }
 function applyDayPlan(day){
-  var plan=JSON.parse(localStorage.getItem('week_plan')||'{}');
-  var exs=plan[day];if(!exs||!exs.length) return;
+  var plan=window._weekPlan||JSON.parse(localStorage.getItem('week_plan')||'{}');
+  var exs=plan[day]||plan[String(day)];if(!exs||!exs.length) return;
   document.getElementById('exlist').innerHTML='';exCount=0;
   exs.forEach(function(n){addEx(n);});
   go('log');toast('✓ 已套用'+['週日','週一','週二','週三','週四','週五','週六'][day]+'課表');
@@ -1133,29 +1177,46 @@ function applyAiPlan(text){
   go('log');toast('✓ 已套用 AI 課表，共 '+exs.length+' 個動作！');
 }
 async function saveWeekPlan(text){
-  // Pure text parsing - no Gemini needed
   var plan={};
   var dayMap={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
+  // Build full exercise list including aliases
   var allEx=Object.values(EX_CATS).flat();
+  var allAlias=Object.keys(EX_ALIAS);
   var lines=text.split('\n');
   var curDay=-1;
   lines.forEach(function(l){
-    // Detect day keywords
+    // Detect day - support 週X、週X：、【週X】、星期X formats
     Object.entries(dayMap).forEach(function(kv){
-      if(l.includes('週'+kv[0])||l.includes('星期'+kv[0])||
-         l.match(new RegExp('Day\\s*'+({'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':7,'天':7}[kv[0]]||99)))){
+      var patterns=['週'+kv[0],'星期'+kv[0]];
+      if(patterns.some(function(p){return l.includes(p);})){
         curDay=kv[1];
         if(!plan[curDay]) plan[curDay]=[];
       }
     });
-    // Detect exercises in current day
+    // Skip rest day lines
+    if(l.includes('休息')) return;
+    // Match exercises
     if(curDay>=0){
+      // Match direct names
       allEx.forEach(function(name){
         if(l.includes(name)&&!(plan[curDay]||[]).includes(name)){
           if(!plan[curDay]) plan[curDay]=[];
           plan[curDay].push(name);
         }
       });
+      // Match aliases - only add if canonical not already present
+      allAlias.forEach(function(alias){
+        var canonical=EX_ALIAS[alias];
+        if(l.includes(alias)&&!(plan[curDay]||[]).includes(canonical)){
+          // Remove original if it was added (prefer canonical)
+          if(!plan[curDay]) plan[curDay]=[];
+          var origIdx=plan[curDay].indexOf(alias);
+          if(origIdx>=0) plan[curDay].splice(origIdx,1);
+          plan[curDay].push(canonical);
+        }
+      });
+      // Deduplicate
+      if(plan[curDay]) plan[curDay]=plan[curDay].filter(function(v,i,a){return a.indexOf(v)===i;});
     }
   });
   var hasPlan=Object.keys(plan).some(function(k){return plan[k]&&plan[k].length>0;});
@@ -1185,7 +1246,7 @@ async function saveWeekPlan(text){
 function checkAndLoadTodayPlan(){
   var plan=window._weekPlan||JSON.parse(localStorage.getItem('week_plan')||'{}');
   var today=new Date().getDay(); // 0=Sun
-  var exs=plan[today];
+  var exs=plan[today]||plan[String(today)];
   if(!exs||!exs.length) return;
   var lastLoad=localStorage.getItem('plan_loaded_date');
   var todayStr=new Date().toISOString().slice(0,10);
