@@ -2249,7 +2249,38 @@ async function genTodaySummary(){
     if(w.type==='cardio'&&w.cardio) return '有氧'+w.cardio.time+'分鐘';
     return (w.exercises||[]).map(function(e){return e.name+e.sets.length+'組';}).join('、');
   }).join('；')||'未訓練';
-  var q='今天（'+today+'）的狀況：\n飲食：'+dietStr+'\n總計：熱量'+Math.round(totalCal)+'kcal（目標'+goal+'），蛋白質'+Math.round(totalP)+'g（目標'+proteinGoal+'g），碳水'+Math.round(totalC)+'g，脂肪'+Math.round(totalF)+'g\n訓練：'+wkStr+'\n\n請用繁體中文，給我一個簡短有力的今日總結（3-5點），包含：今天吃得好不好、訓練完成度、最重要的一個改善建議。語氣像朋友，不要太正式。';
+  // Build comparison with previous session
+  var prevWk=window._WK.filter(function(w){return w.date!==today&&w.type==='strength';})[0];
+  var compStr='';
+  if(prevWk){
+    var prevExs=prevWk.exercises||[];
+    var todayExs=todayWk.filter(function(w){return w.type==='strength';}).flatMap(function(w){return w.exercises||[];});
+    compStr='上次訓練（'+prevWk.date+'）對比：\n';
+    todayExs.forEach(function(e){
+      var prev=prevExs.find(function(p){return p.name===e.name;});
+      if(prev){
+        var prevMax=Math.max.apply(null,prev.sets.map(function(s){return s.weight;}));
+        var todayMax=Math.max.apply(null,e.sets.map(function(s){return s.weight;}));
+        var prevVol=prev.sets.reduce(function(a,s){return a+s.weight*s.reps;},0);
+        var todayVol=e.sets.reduce(function(a,s){return a+s.weight*s.reps;},0);
+        compStr+=e.name+'：今天最大'+todayMax+'kg/總量'+todayVol+'kg vs 上次最大'+prevMax+'kg/總量'+prevVol+'kg\n';
+      } else {
+        var todayMax=Math.max.apply(null,e.sets.map(function(s){return s.weight;}));
+        compStr+=e.name+'：今天最大'+todayMax+'kg（首次或新動作）\n';
+      }
+    });
+  }
+  var q='今天（'+today+'）訓練與飲食數據：\n'+
+    '飲食：'+dietStr+'\n'+
+    '熱量：'+Math.round(totalCal)+'kcal（目標'+goal+'），蛋白質：'+Math.round(totalP)+'g（目標'+proteinGoal+'g），碳水：'+Math.round(totalC)+'g，脂肪：'+Math.round(totalF)+'g\n'+
+    '訓練：'+wkStr+'\n'+
+    (compStr?compStr+'\n':'')+
+    '請用繁體中文給我一個實質的今日分析，格式如下：\n'+
+    '1. 【飲食評估】熱量/蛋白質/碳水是否達標，哪裡需要調整（具體說明差多少）\n'+
+    '2. 【訓練對比】和上次相比，每個動作的重量或訓練量有沒有進步，進步了多少\n'+
+    '3. 【下次建議】每個動作下次應該用多少重量（根據今天表現，完成所有組才建議加重）\n'+
+    '4. 【一句話重點】今天最需要改善的一件事\n'+
+    '不要過度讚美，要直接給數字和具體建議。';
   var key=window._geminiKey;
   if(!key){el.innerHTML='<span style="color:var(--danger)">請先設定 Gemini API Key</span>';return;}
   try{
