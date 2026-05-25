@@ -309,7 +309,8 @@ canvas{display:block}
   <aside class="sidebar">
     <div class="logo">FIT<em>LOG</em></div>
     <div class="user-info" id="user-email"></div>
-    <button class="nav on" onclick="go('log')">＋ &nbsp;新增訓練</button>
+    <button class="nav on" onclick="go('today')">☀️ &nbsp;今日總覽</button>
+    <button class="nav" onclick="go('log')">＋ &nbsp;新增訓練</button>
     <button class="nav" onclick="go('body')">⚖️ &nbsp;身體數據</button>
     <button class="nav" onclick="go('diet')">🥗 &nbsp;飲食記錄</button>
     <button class="nav" onclick="go('ai')">🤖 &nbsp;AI 教練</button>
@@ -323,8 +324,68 @@ canvas{display:block}
   </aside>
   <main class="main">
 
+    <!-- TODAY -->
+    <div id="pg-today" class="pg on">
+      <div class="pg-title">☀️ 今日總覽</div>
+
+      <!-- Date + streak -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div id="today-date" style="font-size:16px;color:var(--muted)"></div>
+        <div id="today-streak" style="font-size:14px;color:var(--accent)"></div>
+      </div>
+
+      <!-- Quick stats row -->
+      <div class="mrow4" style="margin-bottom:1rem">
+        <div class="mcard"><div class="mval" id="td-cal">—</div><div class="mlbl">今日熱量</div></div>
+        <div class="mcard"><div class="mval blue" id="td-protein">—</div><div class="mlbl">蛋白質 g</div></div>
+        <div class="mcard"><div class="mval purple" id="td-vol">—</div><div class="mlbl">訓練量 kg</div></div>
+        <div class="mcard"><div class="mval warn" id="td-cardio">—</div><div class="mlbl">有氧 分鐘</div></div>
+      </div>
+
+      <!-- Diet summary -->
+      <div class="card" id="td-diet-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-lbl" style="margin-bottom:0">🥗 今日飲食</div>
+          <button class="btn btn-sm" onclick="go('diet')">新增 →</button>
+        </div>
+        <div id="td-diet-content"></div>
+        <!-- Calorie bar -->
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:4px">
+            <span id="td-cal-status"></span>
+            <span id="td-protein-status"></span>
+          </div>
+          <div class="cal-bar-wrap"><div class="cal-bar" id="td-cal-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- Workout summary -->
+      <div class="card" id="td-workout-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-lbl" style="margin-bottom:0">🏋️ 今日訓練</div>
+          <button class="btn btn-sm" onclick="go('log')">新增 →</button>
+        </div>
+        <div id="td-workout-content"></div>
+      </div>
+
+      <!-- AI Summary -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-lbl" style="margin-bottom:0">🤖 AI 今日建議</div>
+          <button class="btn btn-sm btn-purple" onclick="genTodaySummary()">分析 ✨</button>
+        </div>
+        <div id="td-ai-summary" style="font-size:15px;color:var(--muted);line-height:1.7">點右上角「分析」獲取 AI 個人化建議</div>
+      </div>
+
+      <!-- Quick actions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-accent" onclick="go('log')" style="padding:14px">＋ 新增訓練</button>
+        <button class="btn btn-blue" onclick="go('diet')" style="padding:14px">🥗 記錄飲食</button>
+      </div>
+    </div>
+
     <!-- LOG -->
-    <div id="pg-log" class="pg on">
+    <div id="pg-log" class="pg">
       <div class="pg-title">新增訓練
         <span class="sync-badge"><span class="sync-dot" id="sync-dot"></span><span id="sync-txt">已同步</span></span>
       </div>
@@ -715,7 +776,8 @@ canvas{display:block}
   </div>
 </div>
 <nav class="mobnav">
-  <button class="mobnav-btn on" id="mn-log" onclick="go('log');closeMore()"><span class="mobnav-icon">＋</span>記錄</button>
+  <button class="mobnav-btn on" id="mn-today" onclick="go('today');closeMore()"><span class="mobnav-icon">☀️</span>今日</button>
+  <button class="mobnav-btn" id="mn-log" onclick="go('log');closeMore()"><span class="mobnav-icon">＋</span>記錄</button>
   <button class="mobnav-btn" id="mn-diet" onclick="go('diet');closeMore()"><span class="mobnav-icon">🥗</span>飲食</button>
   <button class="mobnav-btn" id="mn-ai" onclick="go('ai');closeMore()"><span class="mobnav-icon">🤖</span>AI</button>
   <button class="mobnav-btn" id="mn-templates" onclick="go('templates');closeMore()"><span class="mobnav-icon">📋</span>範本</button>
@@ -919,7 +981,7 @@ async function loadAll(){
       if(prefs.cal_goal) localStorage.setItem('cal_goal',prefs.cal_goal);
       if(prefs.theme){ localStorage.setItem('theme',prefs.theme); setTheme(prefs.theme); }
     }
-    syncStatus('ok'); updateBodyMetrics(); renderDiet(); renderAiChat();
+    syncStatus('ok'); updateBodyMetrics(); renderDiet(); renderAiChat(); renderToday();
   } catch(e){ syncStatus('err'); console.error(e); }
 }
 async function push(colName,data){
@@ -935,7 +997,7 @@ async function push(colName,data){
 }
 
 // ── Nav ─────────────────────────────────────────────────
-var PAGES=['log','body','diet','ai','goals','templates','history','progress','habit','settings'];
+var PAGES=['today','log','body','diet','ai','goals','templates','history','progress','habit','settings'];
 function go(p){
   document.querySelectorAll('.pg').forEach(function(e){e.classList.remove('on');});
   document.querySelectorAll('.nav').forEach(function(e){e.classList.remove('on');});
@@ -952,6 +1014,7 @@ function go(p){
   if(p==='habit') renderHabit();
   if(p==='body') renderBody();
   if(p==='ai') renderAiChat();
+  if(p==='today') renderToday();
   if(p==='goals') renderGoals();
   if(p==='diet') renderDiet();
   if(p==='templates') renderTemplates();
@@ -2071,6 +2134,128 @@ document.addEventListener('click',function(e){
   }
 });
 
+// ── Today page ───────────────────────────────────────────
+function renderToday(){
+  var today=new Date().toISOString().slice(0,10);
+  var days=['日','一','二','三','四','五','六'];
+  var now=new Date();
+  document.getElementById('today-date').textContent=
+    now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 週'+days[now.getDay()];
+
+  // Streak
+  var trained=new Set(window._WK.map(function(w){return w.date;}));
+  var s=0;var tmp=new Date(now);
+  while(true){var ds=tmp.toISOString().slice(0,10);if(trained.has(ds)){s++;tmp.setDate(tmp.getDate()-1);}else break;}
+  document.getElementById('today-streak').textContent=s>0?'🔥 連續 '+s+' 天':'今天還沒訓練';
+
+  // Diet stats
+  var todayDiet=window._DT.filter(function(d){return d.date===today;});
+  var totalCal=todayDiet.reduce(function(a,d){return a+d.calories;},0);
+  var totalP=todayDiet.reduce(function(a,d){return a+d.protein;},0);
+  var goal=parseInt(localStorage.getItem('cal_goal')||'2000');
+  var proteinGoal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
+  // Add cardio burn
+  var todayCardio=window._WK.filter(function(w){return w.date===today&&w.type==='cardio'&&w.cardio;});
+  var cardioBurn=todayCardio.reduce(function(a,w){
+    var mins=w.cardio.time||0;var km=w.cardio.distance||0;
+    var bw=(window._BD[0]&&window._BD[0].weight)||70;
+    return a+Math.round(km>0?(km*bw*1.036):mins*7*bw/60);
+  },0);
+  var adjGoal=goal+cardioBurn;
+
+  document.getElementById('td-cal').textContent=Math.round(totalCal);
+  document.getElementById('td-protein').textContent=Math.round(totalP)+'g';
+
+  // Cal bar
+  var calPct=Math.min(100,Math.round(totalCal/adjGoal*100));
+  document.getElementById('td-cal-bar').style.width=calPct+'%';
+  document.getElementById('td-cal-bar').style.background=calPct>=100?'var(--danger)':'var(--accent)';
+  var calLeft=Math.round(adjGoal-totalCal);
+  document.getElementById('td-cal-status').textContent=calLeft>0?'還可吃 '+calLeft+' kcal':'超標 '+(calLeft*-1)+' kcal';
+  document.getElementById('td-cal-status').style.color=calLeft>0?'var(--accent)':'var(--danger)';
+  var pLeft=Math.round(proteinGoal-totalP);
+  document.getElementById('td-protein-status').textContent=pLeft>0?'蛋白質還差 '+pLeft+'g':'✓ 蛋白質達標';
+  document.getElementById('td-protein-status').style.color=pLeft>0?'var(--blue)':'var(--accent)';
+
+  // Diet list
+  var meals=['早餐','午餐','晚餐','點心'];
+  var dietHtml='';
+  if(!todayDiet.length){
+    dietHtml='<div style="color:var(--muted);font-size:14px;padding:8px 0">今日尚未記錄飲食</div>';
+  } else {
+    meals.forEach(function(m){
+      var items=todayDiet.filter(function(d){return d.meal===m;});
+      if(!items.length) return;
+      var mCal=items.reduce(function(a,d){return a+d.calories;},0);
+      dietHtml+='<div style="margin-bottom:8px"><div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px">'+m+' · '+Math.round(mCal)+' kcal</div>';
+      items.forEach(function(d){
+        dietHtml+='<div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0">'+
+          '<span>'+d.name+'</span><span style="color:var(--accent)">'+Math.round(d.calories)+' kcal</span></div>';
+      });
+      dietHtml+='</div>';
+    });
+  }
+  document.getElementById('td-diet-content').innerHTML=dietHtml;
+
+  // Workout stats
+  var todayWk=window._WK.filter(function(w){return w.date===today;});
+  var vol=todayWk.reduce(function(a,w){return a+(w.exercises||[]).reduce(function(b,e){return b+e.sets.reduce(function(c,s){return c+s.weight*s.reps;},0);},0);},0);
+  var cardioMins=todayCardio.reduce(function(a,w){return a+(w.cardio?w.cardio.time:0);},0);
+  document.getElementById('td-vol').textContent=vol?vol:'—';
+  document.getElementById('td-cardio').textContent=cardioMins?cardioMins:'—';
+
+  var wkHtml='';
+  if(!todayWk.length){
+    wkHtml='<div style="color:var(--muted);font-size:14px;padding:8px 0">今日尚未記錄訓練</div>';
+  } else {
+    todayWk.forEach(function(w){
+      if(w.type==='cardio'&&w.cardio){
+        wkHtml+='<div style="font-size:14px;padding:4px 0">🏃 有氧 '+w.cardio.time+'分鐘'+(w.cardio.distance?' · '+w.cardio.distance+'km':'')+(cardioBurn?' · 消耗約'+cardioBurn+'kcal':'')+'</div>';
+      } else {
+        var exVol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
+        wkHtml+='<div style="margin-bottom:8px"><div style="font-size:14px;font-weight:600;margin-bottom:3px">🏋️ 重訓 · '+exVol+'kg</div>';
+        (w.exercises||[]).forEach(function(e){
+          var exMax=Math.max.apply(null,e.sets.map(function(s){return s.weight;}));
+          wkHtml+='<div style="font-size:13px;color:var(--muted);padding:2px 0">'+e.name+' · '+e.sets.length+'組 · 最大'+exMax+'kg</div>';
+        });
+        wkHtml+='</div>';
+      }
+    });
+  }
+  document.getElementById('td-workout-content').innerHTML=wkHtml;
+}
+
+async function genTodaySummary(){
+  var el=document.getElementById('td-ai-summary');
+  el.innerHTML='<span style="color:var(--muted)">AI 分析中...</span>';
+  var today=new Date().toISOString().slice(0,10);
+  var todayDiet=window._DT.filter(function(d){return d.date===today;});
+  var todayWk=window._WK.filter(function(w){return w.date===today;});
+  var goal=parseInt(localStorage.getItem('cal_goal')||'2000');
+  var proteinGoal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
+  var totalCal=todayDiet.reduce(function(a,d){return a+d.calories;},0);
+  var totalP=todayDiet.reduce(function(a,d){return a+d.protein;},0);
+  var totalC=todayDiet.reduce(function(a,d){return a+d.carbs;},0);
+  var totalF=todayDiet.reduce(function(a,d){return a+d.fat;},0);
+  var dietStr=todayDiet.map(function(d){return d.meal+':'+d.name+'('+d.calories+'kcal,P'+d.protein+'g)';}).join('、')||'未記錄';
+  var wkStr=todayWk.map(function(w){
+    if(w.type==='cardio'&&w.cardio) return '有氧'+w.cardio.time+'分鐘';
+    return (w.exercises||[]).map(function(e){return e.name+e.sets.length+'組';}).join('、');
+  }).join('；')||'未訓練';
+  var q='今天（'+today+'）的狀況：\n飲食：'+dietStr+'\n總計：熱量'+Math.round(totalCal)+'kcal（目標'+goal+'），蛋白質'+Math.round(totalP)+'g（目標'+proteinGoal+'g），碳水'+Math.round(totalC)+'g，脂肪'+Math.round(totalF)+'g\n訓練：'+wkStr+'\n\n請用繁體中文，給我一個簡短有力的今日總結（3-5點），包含：今天吃得好不好、訓練完成度、最重要的一個改善建議。語氣像朋友，不要太正式。';
+  var key=window._geminiKey;
+  if(!key){el.innerHTML='<span style="color:var(--danger)">請先設定 Gemini API Key</span>';return;}
+  try{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{role:'user',parts:[{text:q}]}]})
+    });
+    var data=await res.json();
+    var reply=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'分析失敗';
+    el.innerHTML=mdRender(reply);
+  } catch(e){el.innerHTML='<span style="color:var(--danger)">連線失敗，請重試</span>';console.error(e);}
+}
+
 function toast(msg,err){
   var t=document.getElementById('toast');
   t.textContent=msg;t.style.background=err?'var(--danger)':'var(--accent)';t.style.color=err?'#fff':'#000';
@@ -2361,6 +2546,7 @@ if(t==='light') document.body.classList.add('light');
 renderExPicker();
 checkAndLoadTodayPlan();
 if(!document.getElementById('exlist').children.length) addEx('臥推');
+renderToday();
 </script>
 </body>
 </html>
