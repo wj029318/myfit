@@ -2215,8 +2215,15 @@ function renderToday(){
         var exVol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
         wkHtml+='<div style="margin-bottom:8px"><div style="font-size:14px;font-weight:600;margin-bottom:3px">🏋️ 重訓 · '+exVol+'kg</div>';
         (w.exercises||[]).forEach(function(e){
-          var exMax=Math.max.apply(null,e.sets.map(function(s){return s.weight;}));
-          wkHtml+='<div style="font-size:13px;color:var(--muted);padding:2px 0">'+e.name+' · '+e.sets.length+'組 · 最大'+exMax+'kg</div>';
+          var setsStr=e.sets.map(function(s,si){return (si+1)+'. '+s.weight+'kg×'+s.reps;}).join(' · ');
+          var exVol=e.sets.reduce(function(a,s){return a+s.weight*s.reps;},0);
+          wkHtml+='<div style="padding:5px 0;border-bottom:1px solid var(--border)">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center">'+
+              '<span style="font-size:15px;font-weight:600">'+e.name+'</span>'+
+              '<span style="font-size:13px;color:var(--muted)">'+e.sets.length+'組 · '+exVol+'kg</span>'+
+            '</div>'+
+            '<div style="font-size:13px;color:var(--muted);margin-top:3px;line-height:1.8">'+setsStr+'</div>'+
+          '</div>';
         });
         wkHtml+='</div>';
       }
