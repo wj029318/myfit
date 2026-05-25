@@ -683,6 +683,34 @@ canvas{display:block}
         </div>
       </div>
       <div class="card">
+        <div class="card-lbl">AI 模型選擇</div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:1rem;line-height:1.7">選擇你的 Gemini 模型，不同模型有不同免費額度與品質。</p>
+        <div style="display:grid;gap:10px">
+          <label id="model-opt-pro" style="cursor:pointer">
+            <div style="border:2px solid var(--border);border-radius:var(--r-sm);padding:14px;transition:.15s" id="model-pro-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="font-size:16px;font-weight:700">Gemini 2.5 Pro</div>
+                <input type="radio" name="model-select" value="gemini-2.5-pro" id="radio-pro" style="width:18px;height:18px">
+              </div>
+              <div style="font-size:13px;color:var(--accent);margin-bottom:4px">💎 最強模型，推薦付費用戶</div>
+              <div style="font-size:13px;color:var(--muted);line-height:1.6">免費版：每天 25 次請求<br>付費版：按用量計費，約 NT$0.3-1 /次<br>✓ 分析最精準、建議最詳細</div>
+            </div>
+          </label>
+          <label id="model-opt-flash" style="cursor:pointer">
+            <div style="border:2px solid var(--border);border-radius:var(--r-sm);padding:14px;transition:.15s" id="model-flash-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="font-size:16px;font-weight:700">Gemini 2.0 Flash</div>
+                <input type="radio" name="model-select" value="gemini-2.0-flash" id="radio-flash" style="width:18px;height:18px">
+              </div>
+              <div style="font-size:13px;color:var(--blue);margin-bottom:4px">⚡ 免費首選，速度快</div>
+              <div style="font-size:13px;color:var(--muted);line-height:1.6">免費版：每天 1,500 次請求<br>費用：完全免費（一般使用不會超額）<br>✓ 日常記錄、飲食分析足夠用</div>
+            </div>
+          </label>
+        </div>
+        <button class="btn btn-accent" onclick="saveModelChoice()" style="width:100%;margin-top:12px">儲存模型選擇</button>
+        <div id="model-status" style="font-size:13px;color:var(--muted);margin-top:8px;text-align:center"></div>
+      </div>
+      <div class="card">
         <div class="card-lbl">TDEE 個人資料</div>
         <p style="font-size:14px;color:var(--muted);margin-bottom:1rem;line-height:1.6">填寫後系統自動計算每日熱量需求，體重更新時自動調整。</p>
         <div class="grid2">
@@ -873,6 +901,7 @@ onAuthStateChanged(auth, user => {
 window._WK = []; window._BD = []; window._DT = [];
 window._uid = null;
 window._geminiKey = null;
+window._geminiModel = 'gemini-2.5-pro';
 window._userPrefs = {};
 window._weekPlan = {};
 var curType = 'strength';
@@ -978,6 +1007,7 @@ async function loadAll(){
       var prefs=settingsSnap.data();
       window._userPrefs=prefs;
       if(prefs.gemini_api_key) window._geminiKey=prefs.gemini_api_key;
+      if(prefs.gemini_model) window._geminiModel=prefs.gemini_model;
       if(prefs.cal_goal) localStorage.setItem('cal_goal',prefs.cal_goal);
       if(prefs.theme){ localStorage.setItem('theme',prefs.theme); setTheme(prefs.theme); }
     }
@@ -1511,7 +1541,7 @@ async function dietAdd(){
   document.getElementById('diet-analyzing').style.display='block';
   document.getElementById('diet-input').value='';
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+getModel()+':generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:'請分析「'+food+'」的營養成分，回傳JSON格式（不要有任何說明文字或markdown，只有純JSON）：{"name":"食物名稱","calories":熱量數字,"protein":蛋白質克數,"carbs":碳水克數,"fat":脂肪克數}。數字請用整數或一位小數。'}]}]
@@ -1546,7 +1576,7 @@ async function dietPhotoAdd(input){
       reader.readAsDataURL(file);
     });
     var mimeType=file.type||'image/jpeg';
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+getModel()+':generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[
@@ -1832,7 +1862,7 @@ async function aiAsk(question){
   try{
     var key=window._geminiKey;
     if(!key){aiHistory[aiHistory.length-1]={role:'assistant',content:'⚠️ 請先至「設定」頁面輸入 Gemini API Key。',typing:false};renderAiChat();return;}
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+getModel()+':generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         system_instruction:{parts:[{text:'你是一位嚴格、直接、不說廢話的健身教練。你的風格像是軍事教練：不稱讚、不安慰、只講事實和數字。規則如下：1.絕對不說「很棒」「做得好」「給你讚」之類的讚美，除非數據真的有突破性進步。2.直接指出問題，說明差多少、差在哪裡。3.每個建議都要有具體數字，例如「下次臥推用62.5kg做3組×10下」而不是「可以嘗試增加重量」。4.如果用戶偷懶或數據退步，直接說「退步了」不要包裝。5.語氣簡短有力，不廢話，不客套。6.用繁體中文回答。'}]},
@@ -2048,6 +2078,40 @@ function autoUpdateTDEE(){
 }
 
 // ── Settings ─────────────────────────────────────────────
+function getModel(){
+  return window._geminiModel||'gemini-2.5-pro';
+}
+async function saveModelChoice(){
+  var sel=document.querySelector('input[name="model-select"]:checked');
+  if(!sel){toast('請選擇模型',1);return;}
+  var model=sel.value;
+  window._geminiModel=model;
+  // Update radio UI
+  updateModelUI(model);
+  try{
+    var fns=window._fbFns,db=window._db;
+    await fns.setDoc(fns.doc(db,'users',window._uid,'settings','prefs'),{gemini_model:model},{merge:true});
+    document.getElementById('model-status').textContent='✓ 已儲存：'+(model==='gemini-2.5-pro'?'Gemini 2.5 Pro':'Gemini 2.0 Flash');
+    toast('✓ 模型已切換為 '+(model==='gemini-2.5-pro'?'2.5 Pro':'2.0 Flash'));
+  } catch(e){ toast('儲存失敗',1);console.error(e); }
+}
+function updateModelUI(model){
+  var proBox=document.getElementById('model-pro-box');
+  var flashBox=document.getElementById('model-flash-box');
+  var radioPro=document.getElementById('radio-pro');
+  var radioFlash=document.getElementById('radio-flash');
+  if(!proBox) return;
+  if(model==='gemini-2.5-pro'){
+    proBox.style.borderColor='var(--accent)';
+    flashBox.style.borderColor='var(--border)';
+    if(radioPro) radioPro.checked=true;
+  } else {
+    flashBox.style.borderColor='var(--blue)';
+    proBox.style.borderColor='var(--border)';
+    if(radioFlash) radioFlash.checked=true;
+  }
+}
+
 async function saveApiKey(){
   var k=document.getElementById('gemini-key-input').value.trim();
   if(!k){toast('請輸入 API Key！',1);return;}
@@ -2112,6 +2176,10 @@ function renderSettings(){
   if(prefs.tdee_activity) document.getElementById('tdee-activity').value=prefs.tdee_activity;
   if(prefs.cal_goal) document.getElementById('tdee-result').textContent='TDEE：'+prefs.cal_goal+' kcal / 日';
   renderGoalModes();
+  // Update model UI
+  updateModelUI(window._geminiModel||'gemini-2.5-pro');
+  var modelStatus=document.getElementById('model-status');
+  if(modelStatus) modelStatus.textContent='目前使用：'+(window._geminiModel==='gemini-2.0-flash'?'Gemini 2.0 Flash（免費版）':'Gemini 2.5 Pro');
 }
 
 // ── Toast ────────────────────────────────────────────────
@@ -2284,7 +2352,7 @@ async function genTodaySummary(){
   var key=window._geminiKey;
   if(!key){el.innerHTML='<span style="color:var(--danger)">請先設定 Gemini API Key</span>';return;}
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+getModel()+':generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts:[{text:q}]}]})
     });
@@ -2544,7 +2612,7 @@ async function aiMuscleAnalysis(){
   var key=window._geminiKey;
   if(!key){el.innerHTML='<span style="color:var(--danger)">請先設定 Gemini API Key</span>';return;}
   try{
-    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
+    var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+getModel()+':generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({contents:[{role:'user',parts:[{text:q}]}]})
     });
