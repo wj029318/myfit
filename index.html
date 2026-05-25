@@ -1835,7 +1835,7 @@ async function aiAsk(question){
     var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key='+key,{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        system_instruction:{parts:[{text:'你是一個專業的健身教練 AI，擁有運動科學和營養學知識。根據用戶提供的訓練紀錄和身體數據，給出個人化、具體可行的建議。回答要清晰有條理，適度使用數字和數據支持建議。'}]},
+        system_instruction:{parts:[{text:'你是一位嚴格、直接、不說廢話的健身教練。你的風格像是軍事教練：不稱讚、不安慰、只講事實和數字。規則如下：1.絕對不說「很棒」「做得好」「給你讚」之類的讚美，除非數據真的有突破性進步。2.直接指出問題，說明差多少、差在哪裡。3.每個建議都要有具體數字，例如「下次臥推用62.5kg做3組×10下」而不是「可以嘗試增加重量」。4.如果用戶偷懶或數據退步，直接說「退步了」不要包裝。5.語氣簡短有力，不廢話，不客套。6.用繁體中文回答。'}]},
         contents:[{role:'user',parts:[{text:ctx+'\n\n用戶問題：'+q}]}]
       })
     });
@@ -2280,7 +2280,7 @@ async function genTodaySummary(){
     '2. 【訓練對比】和上次相比，每個動作的重量或訓練量有沒有進步，進步了多少\n'+
     '3. 【下次建議】每個動作下次應該用多少重量（根據今天表現，完成所有組才建議加重）\n'+
     '4. 【一句話重點】今天最需要改善的一件事\n'+
-    '不要過度讚美，要直接給數字和具體建議。';
+    '風格要嚴格直接，不說廢話，不稱讚，直接講數字和問題。如果某項數據沒達標就直說差多少，如果退步就說退步。';
   var key=window._geminiKey;
   if(!key){el.innerHTML='<span style="color:var(--danger)">請先設定 Gemini API Key</span>';return;}
   try{
