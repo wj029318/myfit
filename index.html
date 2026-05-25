@@ -396,23 +396,22 @@ canvas{display:block}
       <div class="pg-title">🥗 飲食記錄</div>
       <div class="card">
         <div class="card-lbl">新增食物</div>
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <div class="field" style="flex:1;margin-bottom:0">
-            <label>食物名稱</label>
-            <input id="diet-input" placeholder="例：茶葉蛋、雞腿便當..." onkeydown="if(event.key==='Enter')dietAdd()" style="font-size:18px;padding:12px;min-height:48px">
-          </div>
-          <div class="field" style="width:110px;margin-bottom:0">
-            <label>餐別</label>
-            <select id="diet-meal">
-              <option value="早餐">☀️ 早餐</option>
-              <option value="午餐">🌤️ 午餐</option>
-              <option value="晚餐">🌙 晚餐</option>
-              <option value="點心">🍎 點心</option>
-            </select>
-          </div>
-          <button class="btn btn-accent" onclick="dietAdd()" style="margin-bottom:0;white-space:nowrap">AI 分析 ✨</button>
-          <button class="btn btn-blue" onclick="document.getElementById('diet-photo-cam').click()" style="margin-bottom:0;white-space:nowrap">📷 拍照</button>
-          <button class="btn" onclick="document.getElementById('diet-photo-input').click()" style="margin-bottom:0;white-space:nowrap">🖼️ 相簿</button>
+        <!-- 第一行：食物名稱 -->
+        <div class="field" style="margin-bottom:10px">
+          <label>食物名稱</label>
+          <input id="diet-input" placeholder="例：茶葉蛋、雞腿便當..." onkeydown="if(event.key==='Enter')dietAdd()" style="font-size:18px;padding:14px;min-height:52px">
+        </div>
+        <!-- 第二行：餐別 + 按鈕 -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="diet-meal" style="flex:1;min-width:110px;font-size:16px;padding:10px">
+            <option value="早餐">☀️ 早餐</option>
+            <option value="午餐">🌤️ 午餐</option>
+            <option value="晚餐">🌙 晚餐</option>
+            <option value="點心">🍎 點心</option>
+          </select>
+          <button class="btn btn-accent" onclick="dietAdd()" style="white-space:nowrap;flex:1">AI 分析 ✨</button>
+          <button class="btn btn-blue" onclick="document.getElementById('diet-photo-cam').click()" style="white-space:nowrap">📷 拍照</button>
+          <button class="btn" onclick="document.getElementById('diet-photo-input').click()" style="white-space:nowrap">🖼️ 相簿</button>
           <input type="file" id="diet-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="dietPhotoAdd(this)">
           <input type="file" id="diet-photo-input" accept="image/*" style="display:none" onchange="dietPhotoAdd(this)">
         </div>
