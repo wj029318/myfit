@@ -102,7 +102,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.5}
 .exhead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .exname{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border2);border-radius:0;color:var(--text);font-size:15px;font-weight:600;padding:4px 0;outline:none;font-family:inherit}
 .exname:focus{border-bottom-color:var(--accent)}
-.ex-last{font-size:11px;color:var(--muted);margin-bottom:6px;font-style:italic}
+.ex-last{font-size:12px;color:var(--muted);margin-bottom:6px;font-style:italic}
+.ex-prog{font-size:13px;color:var(--accent);margin-bottom:6px;font-weight:600;display:flex;align-items:center;gap:6px}
+.ex-prog.maintain{color:var(--warn)}
+.ex-prog.new{color:var(--blue)}
 .sets-hdr{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;text-align:center;margin-bottom:5px}
 .setrow{display:grid;grid-template-columns:24px 1fr 1fr 80px 24px;gap:6px;align-items:center;margin-bottom:5px}
 .setnum{font-size:13px;color:var(--muted);text-align:center}
@@ -980,6 +983,54 @@ function getLastSets(name){
   return null;
 }
 
+// ── Progression logic ────────────────────────────────────
+// Muscle group -> increment map
+var PROG_INC = {
+  '胸部':2.5,'背部':2.5,'腿部':5,'肩部':2.5,'手臂':1.25,'核心':0,'有氧':0
+};
+function getMuscleCat(name){
+  var found='';
+  Object.entries(EX_CATS).forEach(function(kv){
+    if(kv[1].includes(name)) found=kv[0];
+  });
+  return found;
+}
+function getProgression(name){
+  // Need at least 2 sessions to judge
+  var sessions=window._WK.filter(function(w){
+    return (w.exercises||[]).some(function(e){return e.name===name;});
+  }).slice(0,3); // last 3 sessions
+
+  if(!sessions.length) return null;
+
+  var lastSession=sessions[0];
+  var lastEx=lastSession.exercises.find(function(e){return e.name===name;});
+  if(!lastEx||!lastEx.sets.length) return null;
+
+  var lastSets=lastEx.sets;
+  var maxWeight=Math.max.apply(null,lastSets.map(function(s){return s.weight;}));
+  var targetReps=12; // upper end of typical range
+
+  // Check if all sets completed at least targetReps
+  var allCompleted=lastSets.every(function(s){return s.reps>=targetReps;});
+  // Check if most sets completed (>= 2/3 of sets hit target)
+  var mostCompleted=lastSets.filter(function(s){return s.reps>=targetReps;}).length >= Math.ceil(lastSets.length*0.67);
+
+  var cat=getMuscleCat(name);
+  var inc=PROG_INC[cat]||2.5;
+
+  if(allCompleted){
+    // All sets hit upper limit -> suggest increase
+    return{status:'increase',current:maxWeight,suggested:maxWeight+inc,inc:inc,msg:'上次全組達標 → 建議加重至 '+(maxWeight+inc)+'kg 💪'};
+  } else if(mostCompleted){
+    // Most sets hit limit -> almost ready
+    return{status:'almost',current:maxWeight,suggested:maxWeight,msg:'上次接近達標 → 維持 '+maxWeight+'kg，衝刺全組12下'};
+  } else {
+    // Didn't hit limit -> maintain
+    return{status:'maintain',current:maxWeight,suggested:maxWeight,msg:'上次未達標 → 維持 '+maxWeight+'kg，專注動作品質'};
+  }
+}
+
 // ── Exercise blocks ──────────────────────────────────────
 function addEx(name){
   name=name||'';var id=exCount++;
@@ -999,20 +1050,29 @@ function addEx(name){
   if(lastSets&&lastSets.length){
     lastSets.forEach(function(s){addSet(id,s.weight,s.reps);});
   } else {
-    addSet(id);addSet(id);addSet(id);
+    addSet(id,'','');addSet(id,'','');addSet(id,'','');
   }
 }
 function onExNameChange(id){
   var name=document.getElementById('en'+id).value.trim();
   var lastSets=name?getLastSets(name):null;
+  var prog=name?getProgression(name):null;
   var block=document.getElementById('ex-'+id);
-  var old=block.querySelector('.ex-last');
-  if(old) old.remove();
-  if(lastSets){
-    var hint=document.createElement('div');hint.className='ex-last';
-    hint.textContent='上次：'+lastSets.map(function(s){return s.weight+'kg×'+s.reps;}).join(' / ');
-    block.querySelector('.sets-hdr').before(hint);
+  // Remove old hints
+  block.querySelectorAll('.ex-last,.ex-prog').forEach(function(el){el.remove();});
+  var hintEl=document.createElement('div');
+  if(prog){
+    var cls=prog.status==='increase'?'ex-prog':'ex-prog maintain';
+    var icon=prog.status==='increase'?'⬆️':prog.status==='almost'?'🎯':'⏸️';
+    hintEl.className=cls;hintEl.innerHTML=icon+' '+prog.msg;
+  } else if(lastSets){
+    hintEl.className='ex-last';
+    hintEl.textContent='上次：'+lastSets.map(function(s){return s.weight+'kg×'+s.reps;}).join(' / ');
+  } else if(name){
+    hintEl.className='ex-last';hintEl.style.color='var(--blue)';
+    hintEl.textContent='🆕 首次記錄此動作';
   }
+  if(hintEl.textContent||hintEl.innerHTML) block.querySelector('.sets-hdr').before(hintEl);
 }
 function addSet(eid,w,r){
   var c=document.getElementById('sr'+eid);var n=c.children.length+1;
@@ -1026,9 +1086,11 @@ function addSet(eid,w,r){
   if(w&&r) upd();
 }
 function cv(el){
-  var row=el.parentElement;
-  var w=parseFloat(row.querySelector('.win').value)||0;var r=parseFloat(row.querySelector('.rin').value)||0;
-  row.querySelector('.vout').textContent=(w&&r)?(w*r)+'kg':'—';upd();
+  var row=el.closest('.setrow');
+  var w=parseFloat(row.querySelector('.win').value)||0;
+  var r=parseFloat(row.querySelector('.rin').value)||0;
+  row.querySelector('.vout').textContent=(w&&r)?(w*r)+'kg':'—';
+  upd();
 }
 function upd(){
   var vol=0,sets=0,ex=0;
