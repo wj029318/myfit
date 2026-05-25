@@ -248,6 +248,9 @@ canvas{display:block}
 
 /* mobile */
 @media(max-width:660px){
+  #diet-input{font-size:18px!important;padding:14px!important;min-height:52px!important}
+  #diet-meal{font-size:16px;padding:12px}
+
   .sidebar{display:none}.main{padding:1rem;padding-bottom:75px}
   .mrow{grid-template-columns:1fr 1fr}.mrow4{grid-template-columns:1fr 1fr}
   .grid2,.grid3{grid-template-columns:1fr}
@@ -393,7 +396,7 @@ canvas{display:block}
         <div style="display:flex;gap:8px;align-items:flex-end">
           <div class="field" style="flex:1;margin-bottom:0">
             <label>食物名稱</label>
-            <input id="diet-input" placeholder="例：茶葉蛋、雞腿便當..." onkeydown="if(event.key==='Enter')dietAdd()">
+            <input id="diet-input" placeholder="例：茶葉蛋、雞腿便當..." onkeydown="if(event.key==='Enter')dietAdd()" style="font-size:18px;padding:12px;min-height:48px">
           </div>
           <div class="field" style="width:110px;margin-bottom:0">
             <label>餐別</label>
@@ -405,8 +408,10 @@ canvas{display:block}
             </select>
           </div>
           <button class="btn btn-accent" onclick="dietAdd()" style="margin-bottom:0;white-space:nowrap">AI 分析 ✨</button>
-          <button class="btn btn-blue" onclick="document.getElementById('diet-photo-input').click()" style="margin-bottom:0;white-space:nowrap">📷 拍照</button>
-          <input type="file" id="diet-photo-input" accept="image/*" capture="environment" style="display:none" onchange="dietPhotoAdd(this)">
+          <button class="btn btn-blue" onclick="document.getElementById('diet-photo-cam').click()" style="margin-bottom:0;white-space:nowrap">📷 拍照</button>
+          <button class="btn" onclick="document.getElementById('diet-photo-input').click()" style="margin-bottom:0;white-space:nowrap">🖼️ 相簿</button>
+          <input type="file" id="diet-photo-cam" accept="image/*" capture="environment" style="display:none" onchange="dietPhotoAdd(this)">
+          <input type="file" id="diet-photo-input" accept="image/*" style="display:none" onchange="dietPhotoAdd(this)">
         </div>
         <div id="diet-analyzing" style="display:none" class="diet-analyzing">📷 Gemini 圖片辨識中...</div>
       </div>
