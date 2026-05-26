@@ -1,0 +1,39 @@
+{
+  "name": "FitLog 健身紀錄",
+  "short_name": "FitLog",
+  "description": "個人健身記錄、飲食追蹤、AI 教練",
+  "start_url": "/myfit/",
+  "scope": "/myfit/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "fitness"],
+  "shortcuts": [
+    {
+      "name": "新增訓練",
+      "url": "/myfit/#log",
+      "description": "快速記錄今日訓練"
+    },
+    {
+      "name": "飲食記錄",
+      "url": "/myfit/#diet",
+      "description": "記錄今日飲食"
+    }
+  ]
+}
