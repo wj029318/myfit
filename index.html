@@ -2,8 +2,16 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>FitLog 健身紀錄</title>
+<meta name="description" content="個人健身記錄、飲食追蹤、AI 教練">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitLog">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
   --bg:#0f0f0f;--surface:#191919;--s2:#222;--border:rgba(255,255,255,0.08);
@@ -811,6 +819,17 @@ canvas{display:block}
   <button class="mobnav-btn" id="mn-templates" onclick="go('templates');closeMore()"><span class="mobnav-icon">📋</span>範本</button>
   <button class="mobnav-btn" id="mn-more" onclick="toggleMore()"><span class="mobnav-icon">☰</span>更多</button>
 </nav>
+</div>
+
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:5rem;left:1rem;right:1rem;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);padding:1rem;z-index:300;align-items:center;gap:12px;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+  <div style="font-size:24px">💪</div>
+  <div style="flex:1">
+    <div style="font-weight:600;font-size:15px">安裝 FitLog App</div>
+    <div style="font-size:13px;color:var(--muted)">加入主畫面，像 App 一樣使用</div>
+  </div>
+  <button class="btn btn-accent btn-sm" onclick="installPWA()">安裝</button>
+  <button class="btn btn-sm" onclick="dismissInstall()">✕</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2653,6 +2672,49 @@ renderExPicker();
 checkAndLoadTodayPlan();
 if(!document.getElementById('exlist').children.length) addEx('臥推');
 renderToday();
+</script>
+<script>
+// ── PWA Service Worker ────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err){
+      console.log('SW registration failed:', err);
+    });
+  });
+}
+
+// ── PWA Install Prompt ────────────────────────────────────
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds if not already installed
+  setTimeout(function(){
+    if(deferredPrompt) showInstallBanner();
+  }, 3000);
+});
+function showInstallBanner(){
+  var banner = document.getElementById('install-banner');
+  if(banner) banner.style.display = 'flex';
+}
+function installPWA(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(result){
+    deferredPrompt = null;
+    document.getElementById('install-banner').style.display = 'none';
+  });
+}
+function dismissInstall(){
+  document.getElementById('install-banner').style.display = 'none';
+  localStorage.setItem('install-dismissed', '1');
+}
+window.addEventListener('appinstalled', function(){
+  document.getElementById('install-banner').style.display = 'none';
+  toast('✓ FitLog 已安裝到主畫面！');
+});
 </script>
 </body>
 </html>
