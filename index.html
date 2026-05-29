@@ -921,6 +921,8 @@ window._WK = []; window._BD = []; window._DT = [];
 window._uid = null;
 window._geminiKey = null;
 window._geminiModel = 'gemini-2.5-pro';
+// Restore key from local cache immediately (before Firebase loads)
+try{ var _fk=localStorage.getItem('_fk'); if(_fk) window._geminiKey=atob(_fk); }catch(e){}
 window._userPrefs = {};
 window._weekPlan = {};
 var curType = 'strength';
@@ -1025,7 +1027,10 @@ async function loadAll(){
     if(settingsSnap.exists()){
       var prefs=settingsSnap.data();
       window._userPrefs=prefs;
-      if(prefs.gemini_api_key) window._geminiKey=prefs.gemini_api_key;
+      if(prefs.gemini_api_key){
+        window._geminiKey=prefs.gemini_api_key;
+        localStorage.setItem('_fk', btoa(prefs.gemini_api_key));
+      }
       if(prefs.gemini_model) window._geminiModel=prefs.gemini_model;
       if(prefs.cal_goal) localStorage.setItem('cal_goal',prefs.cal_goal);
       if(prefs.theme){ localStorage.setItem('theme',prefs.theme); setTheme(prefs.theme); }
@@ -1155,7 +1160,7 @@ function addEx(name){
     '<button class="btn btn-sm" onclick="startRest()" title="組間計時">⏱</button>'+
     '<button class="btn btn-sm btn-del" onclick="document.getElementById(\'ex-'+id+'\').remove();upd()">✕</button></div>'+
     (lastHint?'<div class="ex-last">'+lastHint+'</div>':'')+
-    '<div class="sets-hdr"><span></span><span>重量 kg</span><span>次數</span><span>訓練量</span><span></span></div>'+
+    '<div class="sets-hdr"><span></span><span>重量 kg</span><span>次數/秒</span><span>訓練量</span><span></span></div>'+
     '<div id="sr'+id+'"></div><button class="addset" onclick="addSet('+id+')">＋ 新增一組</button>';
   document.getElementById('exlist').appendChild(div);
   if(lastSets&&lastSets.length){
@@ -1187,20 +1192,29 @@ function onExNameChange(id){
 }
 function addSet(eid,w,r){
   var c=document.getElementById('sr'+eid);var n=c.children.length+1;
+  // Check if exercise is core/time-based
+  var exName=(document.getElementById('en'+eid)||{value:''}).value;
+  var isTime=['棒式','死蟲式','鳥狗式','側棒式','懸掛'].some(function(k){return exName.includes(k);});
   var row=document.createElement('div');row.className='setrow';
   row.innerHTML='<span class="setnum">'+n+'</span>'+
-    '<input type="number" class="setin win" placeholder="60" min="0" step="2.5" value="'+(w||'')+'" oninput="cv(this)">'+
-    '<input type="number" class="setin rin" placeholder="10" min="0" value="'+(r||'')+'" oninput="cv(this)">'+
-    '<span class="vout">'+(w&&r?w*r+'kg':'—')+'</span>'+
+    '<input type="number" class="setin win" placeholder="'+(isTime?'—':'60')+'" min="0" step="'+(isTime?'1':'2.5')+'" value="'+(w||'')+'" oninput="cv(this)" '+(isTime?'disabled style="opacity:0.3"':'')+'>'+
+    '<input type="number" class="setin rin" placeholder="'+(isTime?'秒':'10')+'" min="0" value="'+(r||'')+'" oninput="cv(this)">'+
+    '<span class="vout">'+(isTime?(r?r+'秒':'—'):(w&&r?w*r+'kg':'—'))+'</span>'+
     '<button class="delbtn" onclick="this.parentElement.remove();upd()">×</button>';
   c.appendChild(row);
   if(w&&r) upd();
 }
 function cv(el){
   var row=el.closest('.setrow');
-  var w=parseFloat(row.querySelector('.win').value)||0;
+  var winEl=row.querySelector('.win');
+  var w=parseFloat(winEl.value)||0;
   var r=parseFloat(row.querySelector('.rin').value)||0;
-  row.querySelector('.vout').textContent=(w&&r)?(w*r)+'kg':'—';
+  var isDisabled=winEl.disabled;
+  if(isDisabled){
+    row.querySelector('.vout').textContent=r?r+'秒':'—';
+  } else {
+    row.querySelector('.vout').textContent=(w&&r)?(w*r)+'kg':'—';
+  }
   upd();
 }
 function upd(){
@@ -2147,6 +2161,7 @@ async function saveApiKey(){
 }
 async function clearApiKey(){
   window._geminiKey=null;
+  localStorage.removeItem('_fk');
   document.getElementById('gemini-key-input').value='';
   document.getElementById('key-status').textContent='已清除';
   try{
