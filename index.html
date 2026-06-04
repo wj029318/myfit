@@ -241,6 +241,25 @@ canvas{display:block}
 .pr-trend{font-size:13px;white-space:nowrap}
 .pr-date{font-size:12px;color:var(--muted)}
 
+/* Weekly comparison table */
+.week-compare-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.week-compare-table{width:100%;border-collapse:collapse;min-width:700px}
+.week-compare-table th{font-size:13px;font-weight:700;padding:10px 8px;text-align:center;background:var(--s2);border-bottom:2px solid var(--border2);white-space:nowrap}
+.week-compare-table th.day-col{min-width:140px}
+.week-compare-table td{padding:8px;vertical-align:top;border-bottom:1px solid var(--border);font-size:13px}
+.week-compare-table td.label-col{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;background:var(--s2)}
+.wc-ex{margin-bottom:3px;line-height:1.5}
+.wc-ex-name{font-weight:600;font-size:14px;color:var(--text)}
+.wc-sets{font-size:13px;color:var(--muted);line-height:1.6}
+.wc-up{color:var(--accent)}
+.wc-down{color:var(--danger)}
+.wc-same{color:var(--muted)}
+.wc-cal{font-size:15px;font-weight:700}
+.wc-mac{font-size:13px;color:var(--muted)}
+.wc-empty{color:var(--border2);font-size:13px;text-align:center;padding:12px 0}
+.week-nav{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.week-nav-label{flex:1;text-align:center;font-weight:600;font-size:15px}
+
 /* Goal mode buttons */
 .goal-mode-btn{background:var(--s2);border:2px solid var(--border);border-radius:var(--r-sm);padding:12px;cursor:pointer;text-align:center;transition:.15s;font-family:inherit;color:var(--text)}
 .goal-mode-btn:hover{border-color:var(--border2);background:var(--surface)}
@@ -652,6 +671,19 @@ canvas{display:block}
 
       <!-- 訓練類型 -->
       <div class="card"><div class="card-lbl">訓練類型分布</div><div class="chart-wrap"><canvas id="tChart"></canvas></div></div>
+
+      <!-- 週對週比較 -->
+      <div class="card">
+        <div class="card-lbl">週對週比較</div>
+        <div class="week-nav">
+          <button class="btn btn-sm" onclick="weekCompareNav(-1)">← 上一週</button>
+          <div class="week-nav-label" id="wc-label"></div>
+          <button class="btn btn-sm" onclick="weekCompareNav(1)">下一週 →</button>
+        </div>
+        <div class="week-compare-wrap">
+          <table class="week-compare-table" id="wc-table"></table>
+        </div>
+      </div>
     </div>
 
     <!-- HABIT -->
@@ -2495,6 +2527,143 @@ function drawDonut(id,data,labels,colors){
 
 // ── Progress ─────────────────────────────────────────────
 var selMuscleCat='全部';
+var weekCompareOffset=0; // 0=this week vs last week, -1=last week vs week before
+
+function weekCompareNav(dir){
+  weekCompareOffset+=dir;
+  renderWeekCompare();
+}
+
+function getWeekDates(weeksAgo){
+  // Get Mon-Fri dates for a given week (0=this week, -1=last week)
+  var now=new Date();
+  var day=now.getDay(); // 0=Sun
+  var monday=new Date(now);
+  monday.setDate(now.getDate()-(day===0?6:day-1)+(weeksAgo*7));
+  monday.setHours(0,0,0,0);
+  var dates=[];
+  for(var i=0;i<5;i++){
+    var d=new Date(monday);
+    d.setDate(monday.getDate()+i);
+    dates.push(d.toISOString().slice(0,10));
+  }
+  return dates;
+}
+
+function wkLabel(dateStr){
+  var d=new Date(dateStr);
+  var days=['日','一','二','三','四','五','六'];
+  return '週'+days[d.getDay()]+' '+(d.getMonth()+1)+'/'+(d.getDate());
+}
+
+function renderWeekCompare(){
+  var thisWeekDates=getWeekDates(weekCompareOffset);
+  var lastWeekDates=getWeekDates(weekCompareOffset-1);
+
+  // Label
+  var tw=thisWeekDates[0].slice(5)+' ~ '+thisWeekDates[4].slice(5);
+  var lw=lastWeekDates[0].slice(5)+' ~ '+lastWeekDates[4].slice(5);
+  document.getElementById('wc-label').textContent=lw+' vs '+tw;
+
+  // Build workout map by date
+  var wkByDate={};
+  window._WK.forEach(function(w){ wkByDate[w.date]=w; });
+
+  // Build diet map by date
+  var dietByDate={};
+  window._DT.forEach(function(d){
+    if(!dietByDate[d.date]) dietByDate[d.date]={cal:0,protein:0,carbs:0,fat:0};
+    dietByDate[d.date].cal+=d.calories;
+    dietByDate[d.date].protein+=d.protein;
+    dietByDate[d.date].carbs+=d.carbs;
+    dietByDate[d.date].fat+=d.fat;
+  });
+
+  // Build table
+  var dayNames=['週一','週二','週三','週四','週五'];
+  var html='<thead><tr><th class="label-col">項目</th>';
+  for(var i=0;i<5;i++){
+    html+='<th class="day-col" colspan="2">'+dayNames[i]+'<br>'+
+      '<span style="font-size:11px;color:var(--muted);font-weight:400">'+lastWeekDates[i].slice(5)+' / '+thisWeekDates[i].slice(5)+'</span></th>';
+  }
+  html+='</tr></thead><tbody>';
+
+  // Training rows
+  html+='<tr><td class="label-col">訓練</td>';
+  for(var i=0;i<5;i++){
+    var lw=wkByDate[lastWeekDates[i]];
+    var tw=wkByDate[thisWeekDates[i]];
+    html+='<td>'+renderWkCell(lw)+'</td><td>'+renderWkCell(tw, lw)+'</td>';
+  }
+  html+='</tr>';
+
+  // Calorie rows
+  html+='<tr><td class="label-col">熱量<br>kcal</td>';
+  for(var i=0;i<5;i++){
+    var ld=dietByDate[lastWeekDates[i]];
+    var td=dietByDate[thisWeekDates[i]];
+    var lc=ld?Math.round(ld.cal):null;
+    var tc=td?Math.round(td.cal):null;
+    var diff=lc&&tc?tc-lc:null;
+    var cls=diff===null?'':diff>0?'wc-up':diff<0?'wc-down':'wc-same';
+    html+='<td><span class="wc-cal '+(lc?'':'wc-empty')+'">'+(lc||'—')+'</span></td>';
+    html+='<td><span class="wc-cal '+(tc?cls:'wc-empty')+'">'+(tc||'—')+'</span>'+(diff!==null?'<span style="font-size:11px;color:'+(diff>=0?'var(--accent)':'var(--danger)')+'"> '+(diff>=0?'+':'')+diff+'</span>':'')+'</td>';
+  }
+  html+='</tr>';
+
+  // Protein rows
+  html+='<tr><td class="label-col">蛋白質<br>g</td>';
+  for(var i=0;i<5;i++){
+    var ld=dietByDate[lastWeekDates[i]];
+    var td=dietByDate[thisWeekDates[i]];
+    var lp=ld?Math.round(ld.protein):null;
+    var tp=td?Math.round(td.protein):null;
+    var goal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
+    var lpok=lp&&lp>=goal;var tpok=tp&&tp>=goal;
+    html+='<td><span class="wc-mac" style="color:'+(lpok?'var(--accent)':'var(--muted)')+'">'+(lp||'—')+(lp?'g':'')+'</span></td>';
+    html+='<td><span class="wc-mac" style="color:'+(tpok?'var(--accent)':'var(--muted)')+'">'+(tp||'—')+(tp?'g':'')+'</span></td>';
+  }
+  html+='</tr>';
+
+  // Carbs rows
+  html+='<tr><td class="label-col">碳水<br>g</td>';
+  for(var i=0;i<5;i++){
+    var ld=dietByDate[lastWeekDates[i]];
+    var td=dietByDate[thisWeekDates[i]];
+    var lc=ld?Math.round(ld.carbs):null;
+    var tc=td?Math.round(td.carbs):null;
+    html+='<td><span class="wc-mac">'+(lc||'—')+(lc?'g':'')+'</span></td>';
+    html+='<td><span class="wc-mac">'+(tc||'—')+(tc?'g':'')+'</span></td>';
+  }
+  html+='</tr>';
+
+  html+='</tbody>';
+  document.getElementById('wc-table').innerHTML=html;
+}
+
+function renderWkCell(w, prev){
+  if(!w) return '<div class="wc-empty">休息</div>';
+  if(w.type==='cardio'&&w.cardio){
+    return '<div class="wc-ex"><span class="wc-ex-name">🏃 有氧</span><br><span class="wc-sets">'+w.cardio.time+'分 '+(w.cardio.distance?w.cardio.distance+'km':'')+'</span></div>';
+  }
+  var exs=w.exercises||[];
+  if(!exs.length) return '<div class="wc-empty">無資料</div>';
+  return exs.map(function(e){
+    var setsStr=e.sets.map(function(s){return s.weight+'×'+s.reps;}).join(', ');
+    // Compare with previous week same exercise
+    var arrow='';
+    if(prev&&prev.exercises){
+      var pe=prev.exercises.find(function(p){return p.name===e.name;});
+      if(pe){
+        var pm=Math.max.apply(null,pe.sets.map(function(s){return s.weight;}));
+        var cm=Math.max.apply(null,e.sets.map(function(s){return s.weight;}));
+        if(cm>pm) arrow='<span class="wc-up"> ⬆️</span>';
+        else if(cm<pm) arrow='<span class="wc-down"> ⬇️</span>';
+      }
+    }
+    return '<div class="wc-ex"><span class="wc-ex-name">'+e.name+arrow+'</span><br><span class="wc-sets">'+setsStr+'</span></div>';
+  }).join('');
+}
 function selectMuscleCat(cat){
   selMuscleCat=cat;
   document.querySelectorAll('#muscle-tabs .cat-btn').forEach(function(b){b.classList.toggle('on',b.textContent===cat);});
@@ -2618,6 +2787,9 @@ function renderProg(){
   }
   heatHtml+='</div>';
   document.getElementById('heatmap-wrap').innerHTML=heatHtml;
+
+  // Week compare
+  renderWeekCompare();
 
   // Training type donut
   var sc=window._WK.filter(function(w){return w.type==='strength';}).length;
