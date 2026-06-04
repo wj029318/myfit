@@ -2576,7 +2576,10 @@ function renderWeekCompare(){
 
   // Build workout map by date
   var wkByDate={};
-  window._WK.forEach(function(w){ wkByDate[w.date]=w; });
+  window._WK.forEach(function(w){
+    if(!wkByDate[w.date]) wkByDate[w.date]=[];
+    wkByDate[w.date].push(w);
+  });
 
   // Build diet map by date
   var dietByDate={};
@@ -2600,9 +2603,9 @@ function renderWeekCompare(){
   // Training rows
   html+='<tr><td class="label-col">訓練</td>';
   for(var i=0;i<5;i++){
-    var lw=wkByDate[lastWeekDates[i]];
-    var tw=wkByDate[thisWeekDates[i]];
-    html+='<td>'+renderWkCell(lw)+'</td><td>'+renderWkCell(tw, lw)+'</td>';
+    var lw=wkByDate[lastWeekDates[i]]||[];
+    var tw=wkByDate[thisWeekDates[i]]||[];
+    html+='<td>'+renderWkCells(lw)+'</td><td>'+renderWkCells(tw,lw)+'</td>';
   }
   html+='</tr>';
 
@@ -2650,6 +2653,13 @@ function renderWeekCompare(){
   document.getElementById('wc-table').innerHTML=html;
 }
 
+function renderWkCells(wArr, prevArr){
+  if(!wArr||!wArr.length) return '<div class="wc-empty">休息</div>';
+  return wArr.map(function(w){
+    var prev=prevArr&&prevArr.find(function(p){return p.type===w.type;});
+    return renderWkCell(w,prev);
+  }).join('<div style="border-top:1px solid var(--border);margin:6px 0"></div>');
+}
 function renderWkCell(w, prev){
   if(!w) return '<div class="wc-empty">休息</div>';
   if(w.type==='cardio'&&w.cardio){
