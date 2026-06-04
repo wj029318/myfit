@@ -2536,22 +2536,31 @@ function weekCompareNav(dir){
 
 function getWeekDates(weeksAgo){
   // Get Mon-Fri dates for a given week (0=this week, -1=last week)
+  // Taiwan uses Mon as first day of week
   var now=new Date();
-  var day=now.getDay(); // 0=Sun
+  var day=now.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  // Days since last Monday
+  var daysSinceMon=day===0?6:day-1;
   var monday=new Date(now);
-  monday.setDate(now.getDate()-(day===0?6:day-1)+(weeksAgo*7));
+  monday.setDate(now.getDate()-daysSinceMon);
   monday.setHours(0,0,0,0);
+  // Apply week offset
+  monday.setDate(monday.getDate()+(weeksAgo*7));
   var dates=[];
-  for(var i=0;i<5;i++){
+  for(var i=0;i<5;i++){ // Mon=0 to Fri=4
     var d=new Date(monday);
     d.setDate(monday.getDate()+i);
-    dates.push(d.toISOString().slice(0,10));
+    // Use local date to avoid timezone shift
+    var yr=d.getFullYear();
+    var mo=String(d.getMonth()+1).padStart(2,'0');
+    var dy=String(d.getDate()).padStart(2,'0');
+    dates.push(yr+'-'+mo+'-'+dy);
   }
   return dates;
 }
 
 function wkLabel(dateStr){
-  var d=new Date(dateStr);
+  var d=new Date(dateStr+'T00:00:00');
   var days=['日','一','二','三','四','五','六'];
   return '週'+days[d.getDay()]+' '+(d.getMonth()+1)+'/'+(d.getDate());
 }
