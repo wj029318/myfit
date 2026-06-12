@@ -438,9 +438,24 @@ canvas{display:block}
           <button class="btn btn-sm" onclick="addEx()" style="margin-bottom:1rem">＋ 自訂動作</button>
         </div>
         <div id="cf" style="display:none">
+          <div class="field"><label>器材</label>
+            <select id="cequip">
+              <option value="跑步機">🏃 跑步機</option>
+              <option value="划船機">🚣 划船機</option>
+              <option value="風火輪">🌀 風火輪 (Air Bike)</option>
+              <option value="滑雪機">⛷️ 滑雪機</option>
+              <option value="飛輪">🚴 飛輪</option>
+              <option value="橢圓機">🔄 橢圓機</option>
+              <option value="跳繩">🪢 跳繩</option>
+              <option value="游泳">🏊 游泳</option>
+              <option value="爬山">⛰️ 爬山</option>
+              <option value="快走">🚶 快走</option>
+              <option value="其他">📍 其他</option>
+            </select>
+          </div>
           <div class="grid2">
             <div class="field"><label>時間（分鐘）</label><input type="number" id="ct" placeholder="30" min="1" oninput="cpace()"></div>
-            <div class="field"><label>距離（km）</label><input type="number" id="cd" placeholder="5.0" step="0.1" min="0" oninput="cpace()"></div>
+            <div class="field"><label>距離（km，可不填）</label><input type="number" id="cd" placeholder="5.0" step="0.1" min="0" oninput="cpace()"></div>
           </div>
           <div class="field"><label>配速（自動計算）</label><input id="cpacein" readonly placeholder="輸入時間與距離後自動換算"></div>
         </div>
@@ -491,7 +506,7 @@ canvas{display:block}
         </div>
         <!-- 第二行：餐別 + 按鈕 -->
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <select id="diet-meal" style="flex:1;min-width:110px;font-size:16px;padding:10px">
+          <select id="diet-meal" style="flex:1;min-width:110px;font-size:16px;padding:10px" onchange="localStorage.setItem('meal_manual','1')">
             <option value="早餐">☀️ 早餐</option>
             <option value="午餐">🌤️ 午餐</option>
             <option value="晚餐">🌙 晚餐</option>
@@ -1067,7 +1082,7 @@ async function loadAll(){
       if(prefs.cal_goal) localStorage.setItem('cal_goal',prefs.cal_goal);
       if(prefs.theme){ localStorage.setItem('theme',prefs.theme); setTheme(prefs.theme); }
     }
-    syncStatus('ok'); updateBodyMetrics(); renderDiet(); renderAiChat(); renderToday();
+    syncStatus('ok'); updateBodyMetrics(); renderDiet(); renderAiChat(); renderToday(); autoSelectMeal();
   } catch(e){ syncStatus('err'); console.error(e); }
 }
 async function push(colName,data){
@@ -1102,7 +1117,7 @@ function go(p){
   if(p==='ai') renderAiChat();
   if(p==='today') renderToday();
   if(p==='goals') renderGoals();
-  if(p==='diet') renderDiet();
+  if(p==='diet'){renderDiet();autoSelectMeal();}
   if(p==='templates') renderTemplates();
   if(p==='settings') renderSettings();
 }
@@ -1177,6 +1192,80 @@ function getProgression(name){
     // Didn't hit limit -> maintain
     return{status:'maintain',current:maxWeight,suggested:maxWeight,msg:'上次未達標 → 維持 '+maxWeight+'kg，專注動作品質'};
   }
+}
+
+// ── Workout Draft (auto-save unsaved progress) ───────────
+function saveDraft(){
+  var draft={type:curType,note:document.getElementById('note').value,exercises:[],cardio:null};
+  if(curType==='strength'){
+    document.querySelectorAll('.exblock').forEach(function(b){
+      var id=b.id.split('-')[1];var nm=(document.getElementById('en'+id)||{value:''}).value;
+      var sets=[];
+      document.querySelectorAll('#sr'+id+' .setrow').forEach(function(row){
+        var wEl=row.querySelector('.win');var rEl=row.querySelector('.rin');
+        sets.push({weight:wEl.value,reps:rEl.value,disabled:wEl.disabled});
+      });
+      draft.exercises.push({name:nm,sets:sets});
+    });
+  } else {
+    draft.cardio={
+      time:document.getElementById('ct').value,
+      distance:document.getElementById('cd').value,
+      equip:document.getElementById('cequip').value
+    };
+  }
+  // Only save if there's meaningful content
+  var hasContent=draft.note||draft.exercises.some(function(e){return e.name||e.sets.some(function(s){return s.weight||s.reps;});})||
+    (draft.cardio&&(draft.cardio.time||draft.cardio.distance));
+  if(hasContent){
+    draft.savedAt=Date.now();
+    localStorage.setItem('workout_draft',JSON.stringify(draft));
+  } else {
+    localStorage.removeItem('workout_draft');
+  }
+}
+function restoreDraft(){
+  var raw=localStorage.getItem('workout_draft');
+  if(!raw) return false;
+  try{
+    var draft=JSON.parse(raw);
+    // Don't restore drafts older than 24 hours
+    if(Date.now()-(draft.savedAt||0) > 24*60*60*1000){
+      localStorage.removeItem('workout_draft');
+      return false;
+    }
+    setType(draft.type||'strength');
+    document.getElementById('note').value=draft.note||'';
+    if(draft.type==='cardio'&&draft.cardio){
+      document.getElementById('ct').value=draft.cardio.time||'';
+      document.getElementById('cd').value=draft.cardio.distance||'';
+      if(draft.cardio.equip) document.getElementById('cequip').value=draft.cardio.equip;
+      cpace();
+    } else if(draft.exercises&&draft.exercises.length){
+      document.getElementById('exlist').innerHTML='';exCount=0;
+      draft.exercises.forEach(function(ex){
+        addEx(ex.name);
+        var id=exCount-1;
+        // Clear auto-added default sets, restore saved sets
+        document.getElementById('sr'+id).innerHTML='';
+        ex.sets.forEach(function(s){
+          addSet(id,s.weight,s.reps);
+          if(s.disabled){
+            var rows=document.querySelectorAll('#sr'+id+' .setrow');
+            var lastRow=rows[rows.length-1];
+            lastRow.querySelector('.win').disabled=true;
+            lastRow.querySelector('.win').style.opacity='0.3';
+          }
+        });
+        upd();
+      });
+    }
+    toast('📝 已還原上次未儲存的訓練紀錄');
+    return true;
+  } catch(e){ console.error(e); return false; }
+}
+function clearDraft(){
+  localStorage.removeItem('workout_draft');
 }
 
 // ── Exercise blocks ──────────────────────────────────────
@@ -1290,6 +1379,12 @@ function adjRest(d){
 }
 
 // ── Save workout ─────────────────────────────────────────
+// METs values for different cardio equipment (moderate intensity)
+var CARDIO_METS = {
+  '跑步機':7.5,'划船機':7.5,'風火輪':9.5,'滑雪機':8,'飛輪':7,
+  '橢圓機':6.5,'跳繩':10,'游泳':7,'爬山':8,'快走':4,'其他':6
+};
+
 async function saveWorkout(){
   var today=new Date().toISOString().slice(0,10);
   var note=document.getElementById('note').value.trim();
@@ -1307,12 +1402,14 @@ async function saveWorkout(){
     if(!w.exercises.length){toast('請至少記錄一個動作！',1);return;}
   } else {
     var t=parseFloat(document.getElementById('ct').value)||0;var d=parseFloat(document.getElementById('cd').value)||0;
+    var equip=document.getElementById('cequip').value;
     if(!t){toast('請輸入訓練時間！',1);return;}
-    w.cardio={time:t,distance:d,pace:document.getElementById('cpacein').value};
+    w.cardio={time:t,distance:d,pace:document.getElementById('cpacein').value,equip:equip};
   }
   var wid=await push('workouts',w);if(wid)w._id=wid;
   window._WK.unshift(w);
   resetLogForm();
+  clearDraft();
   toast('✓ 已儲存並同步雲端！');setTimeout(function(){go('history');},600);
 }
 function resetLogForm(){
@@ -1695,6 +1792,20 @@ async function dietPhotoSave(){
   toast('✓ 已記錄 '+rec.name+'（'+rec.calories+' kcal）');
 }
 
+function autoSelectMeal(){
+  var sel=document.getElementById('diet-meal');
+  if(!sel) return;
+  // Only auto-select if user hasn't manually changed it this session
+  if(localStorage.getItem('meal_manual')==='1') return;
+  var hour=new Date().getHours();
+  var meal;
+  if(hour>=5&&hour<10) meal='早餐';
+  else if(hour>=10&&hour<14) meal='午餐';
+  else if(hour>=17&&hour<21) meal='晚餐';
+  else meal='點心';
+  sel.value=meal;
+}
+
 function renderDiet(){
   var today=new Date().toISOString().slice(0,10);
   var todayItems=window._DT.filter(function(d){return d.date===today;});
@@ -1706,11 +1817,12 @@ function renderDiet(){
   // Add today's cardio burn
   var todayCardio=window._WK.filter(function(w){return w.date===today&&w.type==='cardio'&&w.cardio;});
   var cardioBurn=todayCardio.reduce(function(a,w){
-    var mins=w.cardio.time||0;var km=w.cardio.distance||0;
-    // MET estimate: running ~8 MET, walking ~4 MET
+    var mins=w.cardio.time||0;
+    var equip=w.cardio.equip||'其他';
+    var mets=CARDIO_METS[equip]||6;
     var bodyWeight=(window._BD[0]&&window._BD[0].weight)||70;
-    var burn=km>0?(km*bodyWeight*1.036):Math.round(mins*7*bodyWeight/60);
-    return a+Math.round(burn);
+    var burn=Math.round(mets*bodyWeight*(mins/60));
+    return a+burn;
   },0);
   var goal=baseGoal+cardioBurn;
   var proteinGoal=(window._BD[0]&&window._BD[0].weight)?Math.round(window._BD[0].weight*1.8):120;
@@ -2249,6 +2361,14 @@ function renderSettings(){
 }
 
 // ── Toast ────────────────────────────────────────────────
+// Auto-save draft on any input change in log page
+document.addEventListener('input', function(e){
+  var pg=document.getElementById('pg-log');
+  if(pg&&pg.classList.contains('on')&&pg.contains(e.target)){
+    saveDraft();
+  }
+});
+
 function toggleMore(){
   var d=document.getElementById('more-drawer');
   var btn=document.getElementById('mn-more');
@@ -2291,9 +2411,11 @@ function renderToday(){
   // Add cardio burn
   var todayCardio=window._WK.filter(function(w){return w.date===today&&w.type==='cardio'&&w.cardio;});
   var cardioBurn=todayCardio.reduce(function(a,w){
-    var mins=w.cardio.time||0;var km=w.cardio.distance||0;
+    var mins=w.cardio.time||0;
+    var equip=w.cardio.equip||'其他';
+    var mets=CARDIO_METS[equip]||6;
     var bw=(window._BD[0]&&window._BD[0].weight)||70;
-    return a+Math.round(km>0?(km*bw*1.036):mins*7*bw/60);
+    return a+Math.round(mets*bw*(mins/60));
   },0);
   var adjGoal=goal+cardioBurn;
 
@@ -2344,7 +2466,9 @@ function renderToday(){
   } else {
     todayWk.forEach(function(w){
       if(w.type==='cardio'&&w.cardio){
-        wkHtml+='<div style="font-size:14px;padding:4px 0">🏃 有氧 '+w.cardio.time+'分鐘'+(w.cardio.distance?' · '+w.cardio.distance+'km':'')+(cardioBurn?' · 消耗約'+cardioBurn+'kcal':'')+'</div>';
+        var equipIcons={'跑步機':'🏃','划船機':'🚣','風火輪':'🌀','滑雪機':'⛷️','飛輪':'🚴','橢圓機':'🔄','跳繩':'🪢','游泳':'🏊','爬山':'⛰️','快走':'🚶','其他':'📍'};
+        var ic=equipIcons[w.cardio.equip]||'🏃';
+        wkHtml+='<div style="font-size:14px;padding:4px 0">'+ic+' '+(w.cardio.equip||'有氧')+' '+w.cardio.time+'分鐘'+(w.cardio.distance?' · '+w.cardio.distance+'km':'')+(cardioBurn?' · 消耗約'+cardioBurn+'kcal':'')+'</div>';
       } else {
         var exVol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
         wkHtml+='<div style="margin-bottom:8px"><div style="font-size:14px;font-weight:600;margin-bottom:3px">🏋️ 重訓 · '+exVol+'kg</div>';
@@ -2448,7 +2572,8 @@ function renderHist(){
   el.innerHTML=window._WK.map(function(w,i){
     var sub='';
     if(w.type==='cardio'&&w.cardio){
-      sub=w.cardio.distance?w.cardio.time+'分鐘 · '+w.cardio.distance+'km · '+w.cardio.pace:w.cardio.time+'分鐘';
+      var equipName=w.cardio.equip||'有氧';
+      sub=equipName+' · '+(w.cardio.distance?w.cardio.time+'分鐘 · '+w.cardio.distance+'km · '+w.cardio.pace:w.cardio.time+'分鐘');
     } else {
       var vol=(w.exercises||[]).reduce(function(a,e){return a+e.sets.reduce(function(b,s){return b+s.weight*s.reps;},0);},0);
       sub=(w.exercises||[]).length+'個動作 · '+vol+'kg · '+(w.exercises||[]).map(function(e){return e.name;}).join('、');
@@ -2876,7 +3001,9 @@ var t=localStorage.getItem('theme')||'dark';
 if(t==='light') document.body.classList.add('light');
 renderExPicker();
 checkAndLoadTodayPlan();
-if(!document.getElementById('exlist').children.length) addEx('臥推');
+if(!restoreDraft()){
+  if(!document.getElementById('exlist').children.length) addEx('臥推');
+}
 renderToday();
 </script>
 <script>
